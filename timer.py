@@ -7,6 +7,7 @@ import time
 import datetime
 import json
 import os
+import sys
 import winsound
 import threading
 
@@ -130,7 +131,7 @@ class TimerApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.withdraw()
-        self.root.title("Timer")
+        self.root.title("Timer | DAps")
         self.root.configure(bg=BG)
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
@@ -160,17 +161,15 @@ class TimerApp:
         self._build()
         self._center()
         self._update_display()
-        self._remove_icon()
+        self._set_icon()
 
-    def _remove_icon(self):
-        try:
-            self.root.iconbitmap(default="")
-        except Exception:
-            pass
-        try:
-            self.root.tk.call("wm", "iconbitmap", self.root._w, "-default", "")
-        except Exception:
-            pass
+    def _set_icon(self):
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.root.iconbitmap(icon_path)
+            except Exception:
+                pass
 
     def _center(self):
         self.root.update_idletasks()
@@ -286,9 +285,9 @@ class TimerApp:
              command=self._open_projector, height=34, radius=10,
              font=("Segoe UI", 10, "bold")).pack(fill="x", pady=(4, 6))
 
-        RBtn(inner, "\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u043f\u0440\u043e\u0435\u043a\u0442\u043e\u0440\u0430", "#7c3aed", "#fff",
-             command=self._open_editor, height=30, radius=10,
-             font=("Segoe UI", 9, "bold")).pack(fill="x", pady=(0, 6))
+        RBtn(inner, "\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u0441\u043b\u0430\u0439\u0434\u0443", "#7c3aed", "#fff",
+             command=self._open_editor, height=40, radius=12,
+             font=("Segoe UI", 12, "bold")).pack(fill="x", pady=(0, 6))
 
         self._lbl(inner, "\u041f\u0440\u0435\u0441\u0435\u0442\u0438")
         pf = tk.Frame(inner, bg=CARD)
@@ -314,6 +313,8 @@ class TimerApp:
         self.proj_lbl = tk.Label(sb, text="\u041f\u0440\u043e\u0435\u043a\u0442\u043e\u0440: \u0437\u0430\u043a\u0440\u0438\u0442\u043e",
                                  font=("Segoe UI", 8), fg=DIM, bg="#0f1525")
         self.proj_lbl.place(x=20, rely=0.5, anchor="w")
+        tk.Label(sb, text="DAps | Diachyk Andrii Private Solutions",
+                 font=("Segoe UI", 7), fg="#444", bg="#0f1525").pack(side="right", padx=8)
 
         self.root.bind("<Double-Button-1>", lambda _: self._toggle_pause())
         self.root.bind("<Escape>", lambda _: self._toggle_pause())
@@ -334,168 +335,394 @@ class TimerApp:
 
     def _open_editor(self):
         d = tk.Toplevel(self.root)
-        d.title("\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u043f\u0440\u043e\u0435\u043a\u0442\u043e\u0440\u0430")
-        d.configure(bg=BG)
+        d.title("\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u0441\u043b\u0430\u0439\u0434\u0443")
+        d.configure(bg="#1e1e2e")
         d.attributes("-topmost", True)
-        d.geometry("360x520")
+        d.geometry("900x560")
+        d.minsize(800, 500)
         d.transient(self.root)
         d.grab_set()
-
-        canvas = tk.Canvas(d, bg=BG, highlightthickness=0, bd=0)
-        sb = tk.Scrollbar(d, orient="vertical", command=canvas.yview)
-        frame = tk.Frame(canvas, bg=BG)
-        frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((0, 0), window=frame, anchor="nw")
-        canvas.configure(yscrollcommand=sb.set)
-        canvas.pack(side="left", fill="both", expand=True)
-        sb.pack(side="right", fill="y")
-
-        pad = tk.Frame(frame, bg=BG, padx=16, pady=10)
-        pad.pack(fill="both", expand=True)
-
-        tk.Label(pad, text="\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u043f\u0440\u043e\u0435\u043a\u0442\u043e\u0440\u0430",
-                 font=("Segoe UI", 14, "bold"), fg=FG, bg=BG).pack(pady=(0, 10))
-
-        # Background color
-        tk.Label(pad, text="\u0424\u043e\u043d \u043f\u0440\u043e\u0435\u043a\u0442\u043e\u0440\u0430",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        bg_frame = tk.Frame(pad, bg=BG)
-        bg_frame.pack(fill="x", pady=(0, 8))
-        self.ed_bg_cv = tk.Canvas(bg_frame, width=28, height=28, bg=self.prj_bg,
-                                  highlightthickness=1, highlightbackground=BORDER, bd=0)
-        self.ed_bg_cv.pack(side="left", padx=(0, 6))
-        tk.Label(bg_frame, text=self.prj_bg, font=("Segoe UI", 9), fg=DIM, bg=BG).pack(side="left")
-
-        def pick_bg():
-            c = colorchooser.askcolor(initialcolor=self.prj_bg, parent=d)
-            if c and c[1]:
-                self.prj_bg = c[1]
-                self.ed_bg_cv.configure(bg=c[1])
-                bg_frame.winfo_children()[-1].configure(text=c[1])
-
-        RBtn(bg_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", INP, FG, pick_bg, 70, 26, 8, ("Segoe UI", 8)).pack(side="right")
-
-        # Timer color
-        tk.Label(pad, text="\u041a\u043e\u043b\u0456\u0440 \u0442\u0430\u0439\u043c\u0435\u0440\u0430",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        tc_frame = tk.Frame(pad, bg=BG)
-        tc_frame.pack(fill="x", pady=(0, 8))
-        self.ed_tc_cv = tk.Canvas(tc_frame, width=28, height=28, bg=self.prj_timer_color,
-                                  highlightthickness=1, highlightbackground=BORDER, bd=0)
-        self.ed_tc_cv.pack(side="left", padx=(0, 6))
-        tk.Label(tc_frame, text=self.prj_timer_color, font=("Segoe UI", 9), fg=DIM, bg=BG).pack(side="left")
-
-        def pick_tc():
-            c = colorchooser.askcolor(initialcolor=self.prj_timer_color, parent=d)
-            if c and c[1]:
-                self.prj_timer_color = c[1]
-                self.ed_tc_cv.configure(bg=c[1])
-                tc_frame.winfo_children()[-1].configure(text=c[1])
-
-        RBtn(tc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", INP, FG, pick_tc, 70, 26, 8, ("Segoe UI", 8)).pack(side="right")
-
-        # Label color
-        tk.Label(pad, text="\u041a\u043e\u043b\u0456\u0440 \u043f\u0456\u0434\u043f\u0438\u0441\u0443",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        lc_frame = tk.Frame(pad, bg=BG)
-        lc_frame.pack(fill="x", pady=(0, 8))
-        self.ed_lc_cv = tk.Canvas(lc_frame, width=28, height=28, bg=self.prj_label_color,
-                                  highlightthickness=1, highlightbackground=BORDER, bd=0)
-        self.ed_lc_cv.pack(side="left", padx=(0, 6))
-        tk.Label(lc_frame, text=self.prj_label_color, font=("Segoe UI", 9), fg=DIM, bg=BG).pack(side="left")
-
-        def pick_lc():
-            c = colorchooser.askcolor(initialcolor=self.prj_label_color, parent=d)
-            if c and c[1]:
-                self.prj_label_color = c[1]
-                self.ed_lc_cv.configure(bg=c[1])
-                lc_frame.winfo_children()[-1].configure(text=c[1])
-
-        RBtn(lc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", INP, FG, pick_lc, 70, 26, 8, ("Segoe UI", 8)).pack(side="right")
-
-        # Status color
-        tk.Label(pad, text="\u041a\u043e\u043b\u0456\u0440 \u0441\u0442\u0430\u0442\u0443\u0441\u0443",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        sc_frame = tk.Frame(pad, bg=BG)
-        sc_frame.pack(fill="x", pady=(0, 8))
-        self.ed_sc_cv = tk.Canvas(sc_frame, width=28, height=28, bg=self.prj_status_color,
-                                  highlightthickness=1, highlightbackground=BORDER, bd=0)
-        self.ed_sc_cv.pack(side="left", padx=(0, 6))
-        tk.Label(sc_frame, text=self.prj_status_color, font=("Segoe UI", 9), fg=DIM, bg=BG).pack(side="left")
-
-        def pick_sc():
-            c = colorchooser.askcolor(initialcolor=self.prj_status_color, parent=d)
-            if c and c[1]:
-                self.prj_status_color = c[1]
-                self.ed_sc_cv.configure(bg=c[1])
-                sc_frame.winfo_children()[-1].configure(text=c[1])
-
-        RBtn(sc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", INP, FG, pick_sc, 70, 26, 8, ("Segoe UI", 8)).pack(side="right")
-
-        # Bar color
-        tk.Label(pad, text="\u041a\u043e\u043c\u0456\u0440 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0443",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        bc_frame = tk.Frame(pad, bg=BG)
-        bc_frame.pack(fill="x", pady=(0, 8))
-        self.ed_bc_cv = tk.Canvas(bc_frame, width=28, height=28, bg=self.prj_bar_color,
-                                  highlightthickness=1, highlightbackground=BORDER, bd=0)
-        self.ed_bc_cv.pack(side="left", padx=(0, 6))
-        tk.Label(bc_frame, text=self.prj_bar_color, font=("Segoe UI", 9), fg=DIM, bg=BG).pack(side="left")
-
-        def pick_bc():
-            c = colorchooser.askcolor(initialcolor=self.prj_bar_color, parent=d)
-            if c and c[1]:
-                self.prj_bar_color = c[1]
-                self.ed_bc_cv.configure(bg=c[1])
-                bc_frame.winfo_children()[-1].configure(text=c[1])
-
-        RBtn(bc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", INP, FG, pick_bc, 70, 26, 8, ("Segoe UI", 8)).pack(side="right")
-
-        # Font size
-        tk.Label(pad, text="\u0420\u043e\u0437\u043c\u0456\u0440 \u0448\u0440\u0438\u0444\u0442\u0443",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        self.ed_font_var = tk.StringVar(value=str(self.prj_font_size))
-        tk.Entry(pad, textvariable=self.ed_font_var, font=("Segoe UI", 12), bg=INP, fg=FG,
-                 insertbackground=FG, relief="flat", highlightthickness=1,
-                 highlightbackground=BORDER, highlightcolor=ACC).pack(fill="x", ipady=4, pady=(0, 8))
-
-        # Show bar
-        self.ed_bar_var = tk.BooleanVar(value=self.prj_show_bar)
-        tk.Checkbutton(pad, text="\u041f\u043e\u043a\u0430\u0437\u0443\u0432\u0430\u0442\u0438 \u043f\u043e\u043b\u043e\u0441\u0443 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0443",
-                       variable=self.ed_bar_var, font=("Segoe UI", 10), fg=FG, bg=BG,
-                       activebackground=BG, activeforeground=FG, selectcolor=INP).pack(fill="x", pady=(0, 8))
-
-        # Bar height
-        tk.Label(pad, text="\u0412\u0438\u0441\u043e\u0442\u0430 \u043f\u043e\u043b\u043e\u0441\u0438 (\u043f\u043a\u0441)",
-                 font=("Segoe UI", 10, "bold"), fg=LBL, bg=BG, anchor="w").pack(fill="x")
-        self.ed_bh_var = tk.StringVar(value=str(self.prj_bar_height))
-        tk.Entry(pad, textvariable=self.ed_bh_var, font=("Segoe UI", 12), bg=INP, fg=FG,
-                 insertbackground=FG, relief="flat", highlightthickness=1,
-                 highlightbackground=BORDER, highlightcolor=ACC).pack(fill="x", ipady=4, pady=(0, 8))
-
-        def apply_and_close():
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if os.path.exists(icon_path):
             try:
-                self.prj_font_size = int(self.ed_font_var.get())
-            except ValueError:
+                d.iconbitmap(icon_path)
+            except Exception:
                 pass
+
+        SW, SH = 480, 270
+        ed = {"sel": None, "drag": None, "offset": (0, 0)}
+        el_pos = {
+            "label": [self.pcfg.get("pos_label_x", SW // 2), self.pcfg.get("pos_label_y", 50)],
+            "timer": [self.pcfg.get("pos_timer_x", SW // 2), self.pcfg.get("pos_timer_y", SH // 2)],
+            "status": [self.pcfg.get("pos_status_x", SW // 2), self.pcfg.get("pos_status_y", SH - 60)],
+            "bar":   [self.pcfg.get("pos_bar_x", SW // 2), self.pcfg.get("pos_bar_y", SH - 20)],
+        }
+        el_size = {
+            "label": self.pcfg.get("label_size", 28),
+            "timer": self.pcfg.get("timer_size", 72),
+            "status": self.pcfg.get("status_size", 18),
+        }
+
+        left = tk.Frame(d, bg="#1e1e2e")
+        left.pack(side="left", fill="both", expand=True, padx=(12, 6), pady=12)
+
+        tk.Label(left, text="\u041f\u0440\u0435\u0432\u044e \u0441\u043b\u0430\u0439\u0434\u0443",
+                 font=("Segoe UI", 11, "bold"), fg="#ccc", bg="#1e1e2e").pack(anchor="w", pady=(0, 6))
+
+        pv = tk.Canvas(left, width=SW, height=SH, bg=self.prj_bg,
+                       highlightthickness=2, highlightbackground="#555", bd=0, cursor="fleur")
+        pv.pack(anchor="center")
+
+        hint = tk.Label(left, text="\u041f\u0435\u0440\u0435\u0442\u044f\u0433\u043d\u0456\u0442\u044c \u0435\u043b\u0435\u043c\u0435\u043d\u0442\u0438 \u043c\u0438\u0448\u043a\u043e\u044e \u043d\u0430 \u0441\u043b\u0430\u0439\u0434\u0456",
+                       font=("Segoe UI", 9), fg="#666", bg="#1e1e2e")
+        hint.pack(anchor="center", pady=(6, 0))
+
+        right = tk.Frame(d, bg="#2a2a3c", width=320, bd=0, highlightthickness=1, highlightbackground="#444")
+        right.pack(side="right", fill="y", padx=(6, 12), pady=12)
+        right.pack_propagate(False)
+
+        def _update_preview():
+            pv.delete("all")
+            pv.configure(bg=self.prj_bg)
+            isz = el_size
+
+            def _grad_colors(base, steps=6):
+                try:
+                    r, g, b = int(base[1:3], 16), int(base[3:5], 16), int(base[5:7], 16)
+                except (ValueError, IndexError):
+                    return [base] * steps
+                return [f"#{max(0, r - i * 8):02x}{max(0, g - i * 8):02x}{max(0, b - i * 8):02x}"
+                        for i in range(steps)]
+
+            def _timer_text():
+                if self.timer_running and not self.paused:
+                    return self._fmt(self.remaining)
+                if self.time_mode and self.target_time:
+                    try:
+                        h, m, s = map(int, self.target_time.split(":"))
+                        diff = datetime.combine(date.today(), time(h, m, s)) - datetime.now()
+                        return self._fmt(max(0, int(diff.total_seconds())))
+                    except Exception:
+                        return "--:--:--"
+                try:
+                    m = int(self.min_var.get())
+                except ValueError:
+                    m = 0
+                try:
+                    s = int(self.sec_var.get())
+                except ValueError:
+                    s = 0
+                return self._fmt(m * 60 + s) if (m or s) else "--:--:--"
+
             try:
-                self.prj_bar_height = int(self.ed_bh_var.get())
-            except ValueError:
-                pass
-            self.prj_show_bar = self.ed_bar_var.get()
+                fsz = int(isz["timer"])
+            except (ValueError, TypeError):
+                fsz = 72
+
+            ttxt = _timer_text()
+            chars = list(ttxt)
+            colors = _grad_colors(self.prj_timer_color, len(chars))
+            cw = fsz * 0.65
+            tw = cw * len(chars)
+            sx = el_pos["timer"][0] - tw / 2
+            for i, ch in enumerate(chars):
+                self._draw_char(pv, ch, sx + cw * i + cw / 2, el_pos["timer"][1], fsz, colors[i])
+
+            try:
+                lfsz = int(isz["label"])
+            except (ValueError, TypeError):
+                lfsz = 28
+            lv = self.label_var.get() or "Seminar Timer"
+            pv.create_text(el_pos["label"][0], el_pos["label"][1], text=lv,
+                           fill=self.prj_label_color, font=("Segoe UI", lfsz, "bold"))
+
+            try:
+                sfsz = int(isz["status"])
+            except (ValueError, TypeError):
+                sfsz = 18
+            stxt = "\u23f8 \u041f\u0430\u0443\u0437\u0430" if self.paused else "\u25b6 \u0422\u0440\u0438\u0432\u0430\u0454\u0442\u044c\u0441\u044f" if self.timer_running else "\u23f6 \u0413\u043e\u0442\u043e\u0432\u0438\u0439"
+            pv.create_text(el_pos["status"][0], el_pos["status"][1], text=stxt,
+                           fill=self.prj_status_color, font=("Segoe UI", sfsz))
+
+            if self.prj_show_bar:
+                bsz = self.prj_bar_height
+                bw = SW * 0.7
+                bx = (SW - bw) / 2
+                by = el_pos["bar"][1] - bsz / 2
+                pv.create_rectangle(bx, by, bx + bw, by + bsz,
+                                    fill="#333", outline="", width=0)
+                pct = max(0, min(1, self.remaining / self.total)) if self.total else 0
+                pv.create_rectangle(bx, by, bx + bw * pct, by + bsz,
+                                    fill=self.prj_bar_color, outline="", width=0)
+
+            sel_id = ed["sel"]
+            for eid, (ex, ey) in el_pos.items():
+                if eid == sel_id:
+                    bw_ = max(60, cw if eid == "timer" else 80)
+                    bh_ = (fsz if eid == "timer" else lfsz if eid == "label" else sfsz if eid == "status" else bsz) + 10
+                    pv.create_rectangle(ex - bw_ / 2 - 3, ey - bh_ / 2 - 3,
+                                        ex + bw_ / 2 + 3, ey + bh_ / 2 + 3,
+                                        outline="#3b82f6", width=2, dash=(5, 3))
+                    for dx, dy, c in [(-1, -1, "#3b82f6"), (1, -1, "#3b82f6"),
+                                      (-1, 1, "#3b82f6"), (1, 1, "#3b82f6")]:
+                        vx = ex + dx * (bw_ / 2 + 3)
+                        vy = ey + dy * (bh_ / 2 + 3)
+                        pv.create_rectangle(vx - 4, vy - 4, vx + 4, vy + 4,
+                                            fill=c, outline="#1e1e2e", width=1)
+
+        def _on_press(ev):
+            mx, my = ev.x, ev.y
+            hit = None
+            best = 30
+            for eid, (ex, ey) in el_pos.items():
+                d2 = ((mx - ex) ** 2 + (my - ey) ** 2) ** 0.5
+                if d2 < best:
+                    best = d2
+                    hit = eid
+            ed["sel"] = hit
+            if hit:
+                ed["drag"] = hit
+                ed["offset"] = (mx - el_pos[hit][0], my - el_pos[hit][1])
+            _update_preview()
+            _show_props()
+
+        def _on_drag(ev):
+            if ed["drag"]:
+                ex = ev.x - ed["offset"][0]
+                ey = ev.y - ed["offset"][1]
+                ex = max(20, min(SW - 20, ex))
+                ey = max(20, min(SH - 20, ey))
+                el_pos[ed["drag"]] = [ex, ey]
+                _update_preview()
+
+        def _on_release(ev):
+            ed["drag"] = None
+
+        pv.bind("<Button-1>", _on_press)
+        pv.bind("<B1-Motion>", _on_drag)
+        pv.bind("<ButtonRelease-1>", _on_release)
+
+        props_frame = tk.Frame(right, bg="#2a2a3c")
+        props_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        tk.Label(props_frame, text="\u0412\u043b\u0430\u0441\u0442\u0438\u0432\u0456\u0441\u0442\u0456",
+                 font=("Segoe UI", 12, "bold"), fg="#fff", bg="#2a2a3c").pack(anchor="w", pady=(0, 8))
+
+        el_list = tk.Frame(props_frame, bg="#2a2a3c")
+        el_list.pack(fill="x", pady=(0, 10))
+        elements_info = {
+            "label": ("\u041f\u0456\u0434\u043f\u0438\u0441", "#f59e0b"),
+            "timer": ("\u0422\u0430\u0439\u043c\u0435\u0440", "#3b82f6"),
+            "status": ("\u0421\u0442\u0430\u0442\u0443\u0441", "#10b981"),
+            "bar": ("\u041f\u0440\u043e\u0433\u0440\u0435\u0441", "#8b5cf6"),
+        }
+        el_btns = {}
+        for eid, (etxt, ecol) in elements_info.items():
+            btn = tk.Label(el_list, text=f"  {etxt}  ", font=("Segoe UI", 10),
+                           fg="#aaa", bg="#1e1e2e", cursor="hand2", padx=8, pady=4)
+            btn.pack(fill="x", pady=1)
+            btn.bind("<Button-1>", lambda e, i=eid: _select_el(i))
+            el_btns[eid] = btn
+
+        sep = tk.Frame(props_frame, bg="#444", height=1)
+        sep.pack(fill="x", pady=(6, 10))
+
+        detail_frame = tk.Frame(props_frame, bg="#2a2a3c")
+        detail_frame.pack(fill="both", expand=True)
+
+        def _select_el(eid):
+            ed["sel"] = eid
+            _update_preview()
+            _show_props()
+            for k, b in el_btns.items():
+                b.configure(bg="#3b82f6" if k == eid else "#1e1e2e",
+                            fg="#fff" if k == eid else "#aaa")
+
+        def _show_props():
+            for w in detail_frame.winfo_children():
+                w.destroy()
+            sel = ed["sel"]
+            if not sel:
+                tk.Label(detail_frame, text="\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u0435\u043b\u0435\u043c\u0435\u043d\u0442",
+                         font=("Segoe UI", 10), fg="#666", bg="#2a2a3c").pack(anchor="w")
+                return
+
+            elabel, ecol = elements_info[sel]
+            tk.Label(detail_frame, text=f"\u2022 {elabel}",
+                     font=("Segoe UI", 11, "bold"), fg=ecol, bg="#2a2a3c").pack(anchor="w", pady=(0, 8))
+
+            if sel in ("label", "timer", "status"):
+                tk.Label(detail_frame, text="\u0420\u043e\u0437\u043c\u0456\u0440 \u0448\u0440\u0438\u0444\u0442\u0443",
+                         font=("Segoe UI", 9, "bold"), fg="#aaa", bg="#2a2a3c").pack(anchor="w")
+                fs_var = tk.StringVar(value=str(el_size[sel]))
+                fs_e = tk.Entry(detail_frame, textvariable=fs_var, font=("Segoe UI", 11),
+                                bg="#1e1e2e", fg="#fff", insertbackground="#fff",
+                                relief="flat", highlightthickness=1,
+                                highlightbackground="#555", highlightcolor="#3b82f6")
+                fs_e.pack(fill="x", ipady=3, pady=(2, 8))
+
+                def _apply_fs(v=fs_var, s=sel):
+                    try:
+                        el_size[s] = int(v.get())
+                    except ValueError:
+                        pass
+                    _update_preview()
+
+                fs_e.bind("<Return>", lambda e: _apply_fs())
+                fs_e.bind("<FocusOut>", lambda e: _apply_fs())
+
+            if sel == "timer":
+                tk.Label(detail_frame, text="\u041a\u043e\u043b\u0456\u0440 \u0442\u0430\u0439\u043c\u0435\u0440\u0430",
+                         font=("Segoe UI", 9, "bold"), fg="#aaa", bg="#2a2a3c").pack(anchor="w")
+                tc_frame = tk.Frame(detail_frame, bg="#2a2a3c")
+                tc_frame.pack(fill="x", pady=(2, 8))
+                tc_cv = tk.Canvas(tc_frame, width=28, height=28, bg=self.prj_timer_color,
+                                  highlightthickness=1, highlightbackground="#555", bd=0)
+                tc_cv.pack(side="left", padx=(0, 6))
+                tk.Label(tc_frame, text=self.prj_timer_color, font=("Segoe UI", 9), fg="#888", bg="#2a2a3c").pack(side="left")
+
+                def pick_tc(ev=None, cv=tc_cv, lb=tc_frame.winfo_children()[-1]):
+                    c = colorchooser.askcolor(initialcolor=self.prj_timer_color, parent=d)
+                    if c and c[1]:
+                        self.prj_timer_color = c[1]
+                        cv.configure(bg=c[1])
+                        lb.configure(text=c[1])
+                        _update_preview()
+
+                RBtn(tc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", "#555", "#fff", pick_tc, 70, 24, 8, ("Segoe UI", 8)).pack(side="right")
+
+            if sel == "label":
+                tk.Label(detail_frame, text="\u041a\u043e\u043b\u0456\u0440 \u043f\u0456\u0434\u043f\u0438\u0441\u0443",
+                         font=("Segoe UI", 9, "bold"), fg="#aaa", bg="#2a2a3c").pack(anchor="w")
+                lc_frame = tk.Frame(detail_frame, bg="#2a2a3c")
+                lc_frame.pack(fill="x", pady=(2, 8))
+                lc_cv = tk.Canvas(lc_frame, width=28, height=28, bg=self.prj_label_color,
+                                  highlightthickness=1, highlightbackground="#555", bd=0)
+                lc_cv.pack(side="left", padx=(0, 6))
+                tk.Label(lc_frame, text=self.prj_label_color, font=("Segoe UI", 9), fg="#888", bg="#2a2a3c").pack(side="left")
+
+                def pick_lc(ev=None, cv=lc_cv, lb=lc_frame.winfo_children()[-1]):
+                    c = colorchooser.askcolor(initialcolor=self.prj_label_color, parent=d)
+                    if c and c[1]:
+                        self.prj_label_color = c[1]
+                        cv.configure(bg=c[1])
+                        lb.configure(text=c[1])
+                        _update_preview()
+
+                RBtn(lc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", "#555", "#fff", pick_lc, 70, 24, 8, ("Segoe UI", 8)).pack(side="right")
+
+            if sel == "status":
+                tk.Label(detail_frame, text="\u041a\u043e\u043b\u0456\u0440 \u0441\u0442\u0430\u0442\u0443\u0441\u0443",
+                         font=("Segoe UI", 9, "bold"), fg="#aaa", bg="#2a2a3c").pack(anchor="w")
+                sc_frame = tk.Frame(detail_frame, bg="#2a2a3c")
+                sc_frame.pack(fill="x", pady=(2, 8))
+                sc_cv = tk.Canvas(sc_frame, width=28, height=28, bg=self.prj_status_color,
+                                  highlightthickness=1, highlightbackground="#555", bd=0)
+                sc_cv.pack(side="left", padx=(0, 6))
+                tk.Label(sc_frame, text=self.prj_status_color, font=("Segoe UI", 9), fg="#888", bg="#2a2a3c").pack(side="left")
+
+                def pick_sc(ev=None, cv=sc_cv, lb=sc_frame.winfo_children()[-1]):
+                    c = colorchooser.askcolor(initialcolor=self.prj_status_color, parent=d)
+                    if c and c[1]:
+                        self.prj_status_color = c[1]
+                        cv.configure(bg=c[1])
+                        lb.configure(text=c[1])
+                        _update_preview()
+
+                RBtn(sc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", "#555", "#fff", pick_sc, 70, 24, 8, ("Segoe UI", 8)).pack(side="right")
+
+            if sel == "bar":
+                tk.Label(detail_frame, text="\u041a\u043e\u043b\u0456\u0440 \u043f\u0440\u043e\u0433\u0440\u0435\u0441\u0443",
+                         font=("Segoe UI", 9, "bold"), fg="#aaa", bg="#2a2a3c").pack(anchor="w")
+                bc_frame = tk.Frame(detail_frame, bg="#2a2a3c")
+                bc_frame.pack(fill="x", pady=(2, 8))
+                bc_cv = tk.Canvas(bc_frame, width=28, height=28, bg=self.prj_bar_color,
+                                  highlightthickness=1, highlightbackground="#555", bd=0)
+                bc_cv.pack(side="left", padx=(0, 6))
+                tk.Label(bc_frame, text=self.prj_bar_color, font=("Segoe UI", 9), fg="#888", bg="#2a2a3c").pack(side="left")
+
+                def pick_bc(ev=None, cv=bc_cv, lb=bc_frame.winfo_children()[-1]):
+                    c = colorchooser.askcolor(initialcolor=self.prj_bar_color, parent=d)
+                    if c and c[1]:
+                        self.prj_bar_color = c[1]
+                        cv.configure(bg=c[1])
+                        lb.configure(text=c[1])
+                        _update_preview()
+
+                RBtn(bc_frame, "\u041e\u0431\u0440\u0430\u0442\u0438", "#555", "#fff", pick_bc, 70, 24, 8, ("Segoe UI", 8)).pack(side="right")
+
+                tk.Label(detail_frame, text="\u0412\u0438\u0441\u043e\u0442\u0430 \u043f\u043e\u043b\u043e\u0441\u0438 (\u043f\u043a\u0441)",
+                         font=("Segoe UI", 9, "bold"), fg="#aaa", bg="#2a2a3c").pack(anchor="w", pady=(4, 0))
+                bh_var = tk.StringVar(value=str(self.prj_bar_height))
+                bh_e = tk.Entry(detail_frame, textvariable=bh_var, font=("Segoe UI", 11),
+                                bg="#1e1e2e", fg="#fff", insertbackground="#fff",
+                                relief="flat", highlightthickness=1,
+                                highlightbackground="#555", highlightcolor="#3b82f6")
+                bh_e.pack(fill="x", ipady=3, pady=(2, 8))
+
+                def _apply_bh(v=bh_var):
+                    try:
+                        self.prj_bar_height = int(v.get())
+                    except ValueError:
+                        pass
+                    _update_preview()
+
+                bh_e.bind("<Return>", lambda e: _apply_bh())
+                bh_e.bind("<FocusOut>", lambda e: _apply_bh())
+
+                self.ed_bar_var2 = tk.BooleanVar(value=self.prj_show_bar)
+                tk.Checkbutton(detail_frame, text="\u041f\u043e\u043a\u0430\u0437\u0443\u0432\u0430\u0442\u0438 \u043f\u043e\u043b\u043e\u0441\u0443",
+                               variable=self.ed_bar_var2, font=("Segoe UI", 10), fg="#ccc", bg="#2a2a3c",
+                               activebackground="#2a2a3c", activeforeground="#fff", selectcolor="#1e1e2e",
+                               command=_update_preview).pack(fill="x", pady=(4, 0))
+
+            tk.Label(detail_frame, text="\u0426\u0435\u0432\u043e \u043f\u043e\u0437\u0438\u0446\u0456\u044f:",
+                     font=("Segoe UI", 9), fg="#666", bg="#2a2a3c").pack(anchor="w", pady=(8, 0))
+            tk.Label(detail_frame, text=f"  x={int(el_pos[sel][0])}  y={int(el_pos[sel][1])}",
+                     font=("Consolas", 9), fg="#888", bg="#2a2a3c").pack(anchor="w")
+
+        _update_preview()
+        _show_props()
+
+        bot = tk.Frame(d, bg="#1e1e2e")
+        bot.pack(side="bottom", fill="x", padx=12, pady=(0, 12))
+
+        def _reset():
+            el_pos["label"] = [SW // 2, 50]
+            el_pos["timer"] = [SW // 2, SH // 2]
+            el_pos["status"] = [SW // 2, SH - 60]
+            el_pos["bar"] = [SW // 2, SH - 20]
+            el_size["label"] = 28
+            el_size["timer"] = 72
+            el_size["status"] = 18
+            ed["sel"] = None
+            _update_preview()
+            _show_props()
+
+        def _save():
+            self.prj_font_size = el_size["timer"]
+            self.prj_show_bar = self.ed_bar_var2.get() if hasattr(self, "ed_bar_var2") else self.prj_show_bar
             self.pcfg = {
                 "bg": self.prj_bg, "timer_color": self.prj_timer_color,
                 "label_color": self.prj_label_color, "status_color": self.prj_status_color,
                 "font_size": self.prj_font_size, "show_bar": self.prj_show_bar,
                 "bar_color": self.prj_bar_color, "bar_height": self.prj_bar_height,
+                "label_size": el_size["label"], "timer_size": el_size["timer"],
+                "status_size": el_size["status"],
+                "pos_label_x": el_pos["label"][0], "pos_label_y": el_pos["label"][1],
+                "pos_timer_x": el_pos["timer"][0], "pos_timer_y": el_pos["timer"][1],
+                "pos_status_x": el_pos["status"][0], "pos_status_y": el_pos["status"][1],
+                "pos_bar_x": el_pos["bar"][0], "pos_bar_y": el_pos["bar"][1],
             }
             save_json(PROJECTOR_CFG, self.pcfg)
             self._sync()
             d.destroy()
             self._toast("\u041d\u0430\u043b\u0430\u0448\u0442\u0443\u0432\u0430\u043d\u043d\u044f \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e")
 
-        RBtn(pad, "\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438", GRN, "#fff", apply_and_close,
-             120, 36, 10, ("Segoe UI", 11, "bold")).pack(pady=(10, 0))
+        RBtn(bot, "\u0421\u043a\u0443\u0441\u0442\u0438\u0442\u0438", "#555", "#fff", _reset,
+             100, 32, 8, ("Segoe UI", 9, "bold")).pack(side="left")
+        RBtn(bot, "\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438", GRN, "#fff", _save,
+             120, 36, 10, ("Segoe UI", 11, "bold")).pack(side="right")
 
         d.bind("<Escape>", lambda _: d.destroy())
 
@@ -669,6 +896,12 @@ class TimerApp:
         self.proj.geometry(f"{mon['w']}x{mon['h']}+{mon['x']}+{mon['y']}")
         self.proj.configure(cursor="none")
         self.proj.protocol("WM_DELETE_WINDOW", self._close_proj)
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.proj.iconbitmap(icon_path)
+            except Exception:
+                pass
         self.proj.update_idletasks()
         self.proj.lift()
         self.proj.focus_force()
@@ -678,25 +911,39 @@ class TimerApp:
         self.pf = tk.Frame(self.proj, bg=self.prj_bg)
         self.pf.place(relx=0.5, rely=0.5, anchor="center")
 
-        self.p_label = tk.Label(self.pf, text="", font=("Segoe UI", 28),
+        pLX = self.pcfg.get("pos_label_x", 0.5)
+        pLY = self.pcfg.get("pos_label_y", 0.19)
+        pTX = self.pcfg.get("pos_timer_x", 0.5)
+        pTY = self.pcfg.get("pos_timer_y", 0.5)
+        pSX = self.pcfg.get("pos_status_x", 0.5)
+        pSY = self.pcfg.get("pos_status_y", 0.78)
+        pBX = self.pcfg.get("pos_bar_x", 0.5)
+        pBY = self.pcfg.get("pos_bar_y", 0.92)
+
+        lbl_sz = self.pcfg.get("label_size", 28)
+        st_sz = self.pcfg.get("status_size", 20)
+
+        self.p_label = tk.Label(self.proj, text="", font=("Segoe UI", lbl_sz),
                                 fg=self.prj_label_color, bg=self.prj_bg)
-        self.p_label.pack(pady=(0, 40))
+        self.p_label.place(relx=pLX / 480, rely=pLY / 270, anchor="center")
 
         self.p_chars = []
-        self.p_single = tk.Label(self.pf, text="", font=("Consolas", self.prj_font_size, "bold"),
+        self.p_single = tk.Label(self.proj, text="", font=("Consolas", self.prj_font_size, "bold"),
                                  fg=self.prj_timer_color, bg=self.prj_bg)
-        self.p_single.pack_forget()
+        self.p_single.place_forget()
 
-        self.bar_frame = tk.Frame(self.pf, bg="#151c30", height=self.prj_bar_height, width=600)
-        self.bar_frame.pack(pady=(40, 0))
-        self.bar_frame.pack_propagate(False)
+        self.bar_frame = tk.Frame(self.proj, bg="#151c30", height=self.prj_bar_height, width=600)
+        self.bar_frame.place(relx=pBX / 480, rely=pBY / 270, anchor="center")
         self.p_bar = tk.Canvas(self.bar_frame, bg=self.prj_bar_color, highlightthickness=0, bd=0,
                                height=self.prj_bar_height)
         self.p_bar.place(relx=0, rely=0, relwidth=1.0, relheight=1.0, anchor="nw")
 
-        self.p_status = tk.Label(self.pf, text="\u041e\u0447\u0456\u043a\u0443\u0432\u0430\u043d\u043d\u044f",
-                                 font=("Segoe UI", 20), fg=self.prj_status_color, bg=self.prj_bg)
-        self.p_status.pack(pady=(20, 0))
+        self.p_status = tk.Label(self.proj, text="\u041e\u0447\u0456\u043a\u0443\u0432\u0430\u043d\u043d\u044f",
+                                 font=("Segoe UI", st_sz), fg=self.prj_status_color, bg=self.prj_bg)
+        self.p_status.place(relx=pSX / 480, rely=pSY / 270, anchor="center")
+
+        tk.Label(self.proj, text="DAps | Diachyk Andrii Private Solutions",
+                 font=("Segoe UI", 10), fg="#333", bg=self.prj_bg).pack(side="bottom", pady=8)
 
         self._sync()
         self.proj_dot.configure(bg=GRN)
@@ -721,37 +968,60 @@ class TimerApp:
         else:
             st = "\u041e\u0447\u0456\u043a\u0443\u0432\u0430\u043d\u043d\u044f"
 
+        mon = get_second_monitor()
+        mw, mh = mon["w"], mon["h"]
+
+        pTX = self.pcfg.get("pos_timer_x", 480 / 2)
+        pTY = self.pcfg.get("pos_timer_y", 270 / 2)
+        pLX = self.pcfg.get("pos_label_x", 480 / 2)
+        pLY = self.pcfg.get("pos_label_y", 270 * 0.19)
+        pSX = self.pcfg.get("pos_status_x", 480 / 2)
+        pSY = self.pcfg.get("pos_status_y", 270 * 0.78)
+        pBX = self.pcfg.get("pos_bar_x", 480 / 2)
+        pBY = self.pcfg.get("pos_bar_y", 270 * 0.92)
+
+        def sx(v): return v / 480 * mw
+        def sy(v): return v / 270 * mh
+
         self.proj.configure(bg=self.prj_bg)
-        self.pf.configure(bg=self.prj_bg)
         self.p_label.configure(text=self.lbl_var.get(), fg=self.prj_label_color, bg=self.prj_bg)
+        self.p_label.place(relx=sx(pLX) / mw, rely=sy(pLY) / mh, anchor="center")
         self.p_status.configure(text=st, fg=self.prj_status_color, bg=self.prj_bg)
+        st_sz = self.pcfg.get("status_size", 20)
+        self.p_status.configure(font=("Segoe UI", st_sz))
+        self.p_status.place(relx=sx(pSX) / mw, rely=sy(pSY) / mh, anchor="center")
 
         if self.prj_show_bar:
-            self.bar_frame.pack(pady=(40, 0))
+            self.bar_frame.place(relx=sx(pBX) / mw, rely=sy(pBY) / mh, anchor="center")
             self.bar_frame.configure(bg="#151c30", height=self.prj_bar_height)
             self.p_bar.configure(bg=self.prj_bar_color, height=self.prj_bar_height)
             pct = max(0, min(1, sec / self.total)) if self.total > 0 else (1.0 if sec > 0 else 0)
             self.p_bar.place(relx=0, rely=0, relwidth=pct, relheight=1.0, anchor="nw")
         else:
-            self.bar_frame.pack_forget()
+            self.bar_frame.place_forget()
 
-        self._render(txt)
+        self._render(txt, sx(pTX), sy(pTY))
 
-    def _render(self, txt):
+    def _render(self, txt, tx, ty):
         if len(txt) <= 1:
             self.p_single.configure(text=txt, fg=self.prj_timer_color, bg=self.prj_bg,
                                     font=("Consolas", self.prj_font_size, "bold"))
-            self.p_single.pack()
+            self.p_single.place(relx=tx / self.proj.winfo_width(), rely=ty / self.proj.winfo_height(), anchor="center")
             for c in self.p_chars:
-                c.pack_forget()
+                c.place_forget()
             return
-        self.p_single.pack_forget()
+        self.p_single.place_forget()
         while len(self.p_chars) < len(txt):
-            l = tk.Label(self.pf, text="", font=("Consolas", self.prj_font_size, "bold"), bg=self.prj_bg)
+            l = tk.Label(self.proj, text="", font=("Consolas", self.prj_font_size, "bold"), bg=self.prj_bg)
             self.p_chars.append(l)
         for c in self.p_chars:
-            c.pack_forget()
+            c.place_forget()
         rgb = self._hex2rgb(self.prj_timer_color)
+        cw = self.prj_font_size * 0.65
+        tw = cw * len(txt)
+        sx = tx - tw / 2
+        mw = self.proj.winfo_width()
+        mh = self.proj.winfo_height()
         for i, ch in enumerate(txt):
             lbl = self.p_chars[i]
             t = i / max(1, len(txt) - 1)
@@ -760,7 +1030,8 @@ class TimerApp:
             b = int(rgb[2] * (1 - t * 0.4))
             lbl.configure(text=ch, fg=f"#{r:02x}{g:02x}{b:02x}", bg=self.prj_bg,
                           font=("Consolas", self.prj_font_size, "bold"))
-            lbl.pack(side="left")
+            cx = sx + cw * i + cw / 2
+            lbl.place(relx=cx / mw, rely=ty / mh, anchor="center")
 
     def _flash(self):
         if not self.proj or not self.proj.winfo_exists():

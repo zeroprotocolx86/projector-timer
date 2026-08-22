@@ -1,85 +1,88 @@
-# Seminar Timer
+# Таймер семінару
 
-Dual-screen timer application for seminars and lectures.
+Двоекрanned таймер для семінарів та лекцій з підтримкою проектора.
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Platform](https://img.shields.io/badge/Platform-Windows-0078d4)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-## Features
+## Можливості
 
-- **Dual-screen support** - control panel on laptop, fullscreen timer on projector
-- **Two modes** - countdown from minutes/seconds, or countdown to specific time
-- **Fullscreen projector** - opens automatically on the second monitor, no window borders
-- **Projector editor** - customize colors, font size, progress bar
-- **Quick adjust** - +/-1m, +/-5m, +/-10m buttons
-- **Presets** - save and load timer configurations
-- **Sound alerts** - beep when timer finishes
-- **Always on top** - control panel stays above other windows
+- **Двоекранний режим** - панель керування на ноутбуці, повноекранний таймер на проекторі
+- **Два режими** - відлік хвилин/секунд або відлік до конкретного часу
+- **Повноекранний проектор** - автоматично відкривається на другому моніторі без рамок вікна
+- **Редактор слайду** - візуальний редактор у стилі PowerPoint/Canva з drag-and-drop
+- **Швидке регулювання** - кнопки -10хв, -5хв, -1хв, +1хв, +5хв, +10хв
+- **Пресети** - збереження та завантаження конфігурацій таймера
+- **Звукові сповіщення** - звук при завершенні таймера
+- **Завжди зверху** - панель керування залишається над іншими вікнами
 
-## Quick Start
+## Швидкий старт
 
-### Run from Python
+### Запуск з Python
 
 ```bash
 python timer.py
 ```
 
-### Download EXE
+### Завантаження EXE
 
-Download `Timer.exe` from [Releases](../../releases) and run it directly.
+Завантажте `Timer.exe` з [Релізів](../../releases) та запустіть напряму.
 
-## How to Use
+## Як користуватися
 
-1. Set minutes and seconds, or choose "To specific time" mode
-2. Click **Start** - projector window opens on the second screen automatically
-3. Drag the projector window to your projector/external monitor
-4. Double-click or press **Pause** to pause/resume
-5. Press **Stop** to reset
+1. Встановіть хвилини та секунди, або оберіть "До конкретного часу"
+2. Натисніть **Старт** - вікно проектора автоматично відкриється на другому екрані
+3. Перетягніть вікно проектора на другий монітор або проектор
+4. Подвійне клацання або **Пауза** для призупинення/відновлення
+5. Натисніть **Стоп** для скидання
 
-## Projector Editor
+## Редактор слайду
 
-Click **"Editor projector"** to customize:
-- Background color
-- Timer color with gradient effect
-- Label text color
-- Status text color
-- Progress bar color and height
-- Font size
-- Show/hide progress bar
+Натисніть **"Редактор слайду"** для візуального налаштування проектора:
 
-Settings are saved automatically.
+- Перетягніть елементи мишкою на превью слайду
+- Виділіть елемент для зміни кольору та розміру шрифту
+- Налаштуйте: фон, колір таймера/підпису/статусу/прогресу
+- Розмір шрифту для кожного елемента окремо
+- Показ/приховання прогрес-бару та його висота
+- Всі зміни зберігаються автоматично
 
-## Presets
+## Пресети
 
-Save your favorite timer configurations:
-1. Set up the timer (minutes, seconds, mode, text, color)
-2. Click **Save** in the presets section
-3. Enter a name
-4. Load anytime from the dropdown
+Зберігайте улюблені конфігурації таймера:
+1. Встановіть таймер (хвилини, секунди, режим, текст, колір)
+2. Натисніть **Зберегти** в розділі пресетів
+3. Введіть назву
+4. Завантажуйте будь-коли з меню
 
-## Controls
+## Керування
 
-| Action | Button | Shortcut |
-|--------|--------|----------|
-| Start | Blue button | - |
-| Pause/Resume | Orange button | Double-click, Escape |
-| Stop/Reset | Red button | - |
-| Hide panel | `_` button | - |
+| Дія | Кнопка | Гаряча клавіша |
+|-----|--------|----------------|
+| Старт | Синя кнопка | - |
+| Пауза/Відновити | Помаранчева кнопка | Подвійне клацання, Escape |
+| Стоп/Скидання | Червона кнопка | - |
+| Приховати панель | Кнопка `_` | - |
 
-## Requirements
+## Вимоги
 
 - Windows 10/11
-- Python 3.10+ (for running from source)
-- No external dependencies required
+- Python 3.10+ (для запуску з джерела)
+- Зовнішні залежності не потрібні
 
-## Building from Source
+## Збірка з джерела
 
 ```bash
 pip install pyinstaller
 python -m PyInstaller --onefile --windowed --icon=timer_icon.ico --name "Timer" timer.py
 ```
 
-## License
+## Автор
+
+**DAps** - Дячук Андрій Приватні Рішення
+(Diachyk Andrii Private Solutions)
+
+## Ліцензія
 
 MIT
