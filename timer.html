@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Таймер семінару v1.0</title>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0b0f1c;color:#e0e6f0;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:2rem;user-select:none}
+
+  /* ===== CONTROL PANEL ===== */
+  .panel{width:100%;max-width:540px;background:#141a2b;border:1px solid #2e3a55;border-radius:2rem;padding:2.5rem 2rem;box-shadow:0 8px 40px rgba(0,0,0,.45)}
+  .panel h1{font-size:1.6rem;font-weight:700;text-align:center;margin-bottom:.25rem;background:linear-gradient(135deg,#6f9aff,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .version{text-align:center;font-size:.75rem;color:#5a6a8a;margin-bottom:1.8rem}
+
+  .field{margin-bottom:1.2rem}
+  .field label{display:block;font-size:.82rem;font-weight:600;color:#8899bb;margin-bottom:.4rem;letter-spacing:.03em}
+  .field input[type="number"],
+  .field input[type="time"],
+  .field input[type="text"],
+  .field select{width:100%;padding:.7rem 1rem;background:#1f273f;border:1px solid #2e3a55;border-radius:.75rem;color:#e0e6f0;font-size:.95rem;outline:none;transition:border-color .2s,box-shadow .2s}
+  .field input:focus,
+  .field select:focus{border-color:#6f9aff;box-shadow:0 0 0 3px rgba(111,154,255,.15)}
+  .field input[type="color"]{width:100%;height:42px;padding:4px;background:#1f273f;border:1px solid #2e3a55;border-radius:.75rem;cursor:pointer}
+  .field input[type="color"]::-webkit-color-swatch-wrapper{padding:2px}
+  .field input[type="color"]::-webkit-color-swatch{border-radius:.5rem;border:none}
+
+  .hidden{display:none !important}
+
+  .btn-row{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1.2rem}
+  .btn{flex:1 1 0;min-width:120px;padding:.75rem 1rem;border:none;border-radius:.75rem;font-size:.88rem;font-weight:600;cursor:pointer;transition:transform .12s,box-shadow .2s,opacity .2s;letter-spacing:.02em}
+  .btn:active{transform:scale(.97)}
+  .btn-start{background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;box-shadow:0 4px 16px rgba(37,99,235,.35)}
+  .btn-start:hover{box-shadow:0 6px 24px rgba(37,99,235,.5)}
+  .btn-pause{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;box-shadow:0 4px 16px rgba(217,119,6,.3)}
+  .btn-pause:hover{box-shadow:0 6px 24px rgba(217,119,6,.45)}
+  .btn-reset{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;box-shadow:0 4px 16px rgba(220,38,38,.3)}
+  .btn-reset:hover{box-shadow:0 6px 24px rgba(220,38,38,.45)}
+  .btn-projector{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 4px 16px rgba(5,150,105,.3)}
+  .btn-projector:hover{box-shadow:0 6px 24px rgba(5,150,105,.45)}
+
+  .status-bar{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#1a2140;border:1px solid #2e3a55;border-radius:.75rem;font-size:.82rem;margin-bottom:.8rem}
+  .status-bar .status-text{font-weight:600;color:#8899bb}
+  .status-bar .status-value{font-weight:700;color:#6f9aff}
+  .status-bar .status-value.waiting{color:#8899bb}
+  .status-bar .status-value.counting{color:#34d399}
+  .status-bar .status-value.paused{color:#fbbf24}
+  .status-bar .status-value.done{color:#f87171}
+  .status-bar .status-value.reset{color:#8899bb}
+
+  .projector-status{text-align:center;font-size:.78rem;color:#5a6a8a;margin-bottom:.5rem}
+  .projector-status .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle;background:#ef4444}
+  .projector-status .dot.open{background:#34d399}
+
+  /* ===== PROJECTOR SCREEN ===== */
+  .projector-body{margin:0;padding:0;width:100vw;height:100vh;background:#080b16;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;user-select:none}
+  .projector-label{font-size:3vw;font-weight:400;color:#b8cbff;opacity:.7;margin-bottom:1.5vw;letter-spacing:.04em;text-align:center}
+  .projector-timer{font-size:14vw;font-weight:800;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+  .projector-status-line{margin-top:2vw;font-size:1.8vw;font-weight:600;padding:.5vw 2vw;border-radius:1vw;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);letter-spacing:.06em}
+
+  /* ===== TOAST ===== */
+  .toast-container{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.6rem}
+  .toast{padding:.7rem 1.2rem;border-radius:.6rem;font-size:.82rem;font-weight:500;color:#fff;background:#1f273f;border:1px solid #2e3a55;box-shadow:0 4px 20px rgba(0,0,0,.4);opacity:0;transform:translateX(40px);transition:opacity .3s,transform .3s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(0)}
+  .toast.error{border-color:#dc2626;color:#fca5a5}
+  .toast.success{border-color:#059669;color:#6ee7b7}
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:600px){
+    body{padding:1rem}
+    .panel{padding:1.5rem 1.2rem;border-radius:1.5rem}
+    .btn{min-width:100px;font-size:.82rem;padding:.65rem .8rem}
+  }
+</style>
+</head>
+<body>
+
+<!-- CONTROL PANEL -->
+<div class="panel" id="controlPanel">
+  <h1>Таймер семінару</h1>
+  <p class="version">v1.0</p>
+
+  <div class="field">
+    <label for="minutesInput">Хвилини</label>
+    <input type="number" id="minutesInput" value="15" min="1" max="180" step="1">
+  </div>
+
+  <div class="field">
+    <label for="modeSelect">Режим роботи</label>
+    <select id="modeSelect">
+      <option value="countdown">Зворотній відлік (від введених хв)</option>
+      <option value="toTime">До конкретного часу (година:хвилина)</option>
+    </select>
+  </div>
+
+  <div class="field hidden" id="timeField">
+    <label for="timeInput">Час початку</label>
+    <input type="time" id="timeInput">
+  </div>
+
+  <div class="field">
+    <label for="labelInput">Текст над таймером</label>
+    <input type="text" id="labelInput" value="Семінар почнеться через:">
+  </div>
+
+  <div class="field">
+    <label for="colorInput">Колір таймера</label>
+    <input type="color" id="colorInput" value="#6f9aff">
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart" onclick="startTimer()">Запустити</button>
+    <button class="btn btn-pause" id="btnPause" onclick="togglePause()">Пауза</button>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-reset" id="btnReset" onclick="resetTimer()">Скинути</button>
+    <button class="btn btn-projector" id="btnProjector" onclick="openProjectorWindow()">Відкрити на проекторі</button>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-text">Статус:</span>
+    <span class="status-value waiting" id="statusValue">Очікування</span>
+  </div>
+  <div class="projector-status" id="projectorStatus">
+    <span class="dot" id="projDot"></span>Проектор: закрито
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+(function(){
+  /* ===== STATE ===== */
+  var timerInterval = null;
+  var projectorWindow = null;
+  var isPaused = false;
+  var totalSeconds = 0;
+  var remainingSeconds = 0;
+  var currentStatus = 'waiting';
+  var mode = 'countdown';
+  var syncInterval = null;
+  var projectorCheckInterval = null;
+
+  /* ===== DOM REFS ===== */
+  var minutesInput = document.getElementById('minutesInput');
+  var modeSelect = document.getElementById('modeSelect');
+  var timeField = document.getElementById('timeField');
+  var timeInput = document.getElementById('timeInput');
+  var labelInput = document.getElementById('labelInput');
+  var colorInput = document.getElementById('colorInput');
+  var statusValue = document.getElementById('statusValue');
+  var projectorStatusEl = document.getElementById('projectorStatus');
+  var projDot = document.getElementById('projDot');
+  var btnStart = document.getElementById('btnStart');
+  var btnPause = document.getElementById('btnPause');
+  var controlPanel = document.getElementById('controlPanel');
+
+  /* ===== MODE SWITCH ===== */
+  modeSelect.addEventListener('change', function(){
+    mode = this.value;
+    if(mode === 'toTime'){
+      timeField.classList.remove('hidden');
+    } else {
+      timeField.classList.add('hidden');
+    }
+  });
+
+  /* ===== LIVE SYNC (label + color) ===== */
+  labelInput.addEventListener('input', syncProjector);
+  colorInput.addEventListener('input', syncProjector);
+
+  /* ===== DOUBLE CLICK TOGGLE PAUSE ===== */
+  controlPanel.addEventListener('dblclick', function(e){
+    if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
+    togglePause();
+  });
+
+  /* ===== CLOSE PROJECTOR ON MAIN PAGE CLOSE ===== */
+  window.addEventListener('beforeunload', function(){
+    if(projectorWindow && !projectorWindow.closed){
+      projectorWindow.close();
+    }
+  });
+
+  /* ===== OPEN PROJECTOR ===== */
+  window.openProjectorWindow = function(){
+    if(projectorWindow && !projectorWindow.closed){
+      projectorWindow.focus();
+      updateProjectorStatus(true);
+      return;
+    }
+    var params = 'width=1920,height=1080,toolbar=no,menubar=no,location=no,status=no,resizable=yes';
+    projectorWindow = window.open('', 'Проектор', params);
+    if(!projectorWindow){
+      showToast('Дозвольте спливаючі вікна для цього сайту', 'error');
+      return;
+    }
+    writeProjectorDocument();
+    startProjectorCheck();
+    startSyncInterval();
+    updateProjectorStatus(true);
+    showToast('Вікно проектора відкрито', 'success');
+  };
+
+  function writeProjectorDocument(){
+    var color = colorInput.value;
+    var label = labelInput.value || 'Семінар почнеться через:';
+    var timerText = formatTime(remainingSeconds);
+    var statusText = getStatusText(currentStatus);
+    var darkerColor = darkenColor(color, 0.5);
+    var doc = projectorWindow.document;
+    doc.open();
+    doc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Проектор</title><style>'+
+      '*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}'+
+      'body{margin:0;padding:0;width:100vw;height:100vh;background:#080b16;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;user-select:none;font-family:\'Segoe UI\',system-ui,-apple-system,sans-serif}'+
+      '.label{font-size:3vw;font-weight:400;color:#b8cbff;opacity:.7;margin-bottom:1.5vw;letter-spacing:.04em;text-align:center}'+
+      '.timer{font-size:14vw;font-weight:800;line-height:1;letter-spacing:.04em;font-variant-numeric:tabular-nums}'+
+      '.status-line{margin-top:2vw;font-size:1.8vw;font-weight:600;padding:.5vw 2vw;border-radius:1vw;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:rgba(255,255,255,.55);letter-spacing:.06em}'+
+      '</style></head><body>'+
+      '<div class="label" id="pLabel">'+escapeHtml(label)+'</div>'+
+      '<div class="timer" id="pTimer" style="background:linear-gradient(135deg,'+color+','+darkerColor+');-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">'+escapeHtml(timerText)+'</div>'+
+      '<div class="status-line" id="pStatus">'+escapeHtml(statusText)+'</div>'+
+      '</body></html>');
+    doc.close();
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function darkenColor(hex, factor){
+    hex = hex.replace('#','');
+    var r = parseInt(hex.substring(0,2),16);
+    var g = parseInt(hex.substring(2,4),16);
+    var b = parseInt(hex.substring(4,6),16);
+    r = Math.round(r * factor);
+    g = Math.round(g * factor);
+    b = Math.round(b * factor);
+    return '#' + ((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+  }
+
+  function getStatusText(s){
+    switch(s){
+      case 'waiting': return 'Очікування';
+      case 'counting': return 'Відлік';
+      case 'paused': return 'Пауза';
+      case 'done': return 'Час вийшов!';
+      case 'reset': return 'Скинуто';
+      default: return 'Очікування';
+    }
+  }
+
+  function syncProjector(){
+    if(!projectorWindow || projectorWindow.closed) return;
+    try{
+      var doc = projectorWindow.document;
+      var labelEl = doc.getElementById('pLabel');
+      var timerEl = doc.getElementById('pTimer');
+      var statusEl = doc.getElementById('pStatus');
+      if(labelEl) labelEl.textContent = labelInput.value || 'Семінар почнеться через:';
+      if(statusEl) statusEl.textContent = getStatusText(currentStatus);
+      if(timerEl){
+        timerEl.textContent = formatTime(remainingSeconds);
+        var color = colorInput.value;
+        var darker = darkenColor(color, 0.5);
+        timerEl.style.background = 'linear-gradient(135deg,'+color+','+darker+')';
+        timerEl.style.webkitBackgroundClip = 'text';
+        timerEl.style.webkitTextFillColor = 'transparent';
+        timerEl.style.backgroundClip = 'text';
+      }
+    }catch(e){}
+  }
+
+  /* ===== PROJECTOR SYNC (every 200ms) ===== */
+  function startSyncInterval(){
+    if(syncInterval) clearInterval(syncInterval);
+    syncInterval = setInterval(function(){
+      syncProjector();
+    }, 200);
+  }
+
+  function stopSyncInterval(){
+    if(syncInterval){ clearInterval(syncInterval); syncInterval = null; }
+  }
+
+  /* ===== PROJECTOR WINDOW CHECK ===== */
+  function startProjectorCheck(){
+    if(projectorCheckInterval) clearInterval(projectorCheckInterval);
+    projectorCheckInterval = setInterval(function(){
+      if(projectorWindow && projectorWindow.closed){
+        projectorWindow = null;
+        updateProjectorStatus(false);
+        clearInterval(projectorCheckInterval);
+        projectorCheckInterval = null;
+        stopSyncInterval();
+      }
+    }, 500);
+  }
+
+  function updateProjectorStatus(open){
+    if(open){
+      projectorStatusEl.innerHTML = '<span class="dot open" id="projDot"></span>Проектор: відкрито';
+    } else {
+      projectorStatusEl.innerHTML = '<span class="dot" id="projDot"></span>Проектор: закрито';
+    }
+  }
+
+  /* ===== FORMAT TIME ===== */
+  function formatTime(sec){
+    if(sec < 0) sec = 0;
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  /* ===== SET STATUS ===== */
+  function setStatus(status, text){
+    currentStatus = status;
+    statusValue.textContent = text || getStatusText(status);
+    statusValue.className = 'status-value ' + status;
+    syncProjector();
+  }
+
+  /* ===== CALCULATE TARGET TIME ===== */
+  function getTargetSecondsToTime(){
+    var val = timeInput.value;
+    if(!val) return 0;
+    var parts = val.split(':');
+    var h = parseInt(parts[0],10);
+    var m = parseInt(parts[1],10);
+    var now = new Date();
+    var target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+    if(target <= now){
+      target.setDate(target.getDate() + 1);
+    }
+    return Math.floor((target.getTime() - now.getTime()) / 1000);
+  }
+
+  /* ===== START ===== */
+  window.startTimer = function(){
+    clearInterval(timerInterval);
+    timerInterval = null;
+    isPaused = false;
+
+    mode = modeSelect.value;
+
+    if(mode === 'countdown'){
+      var mins = parseInt(minutesInput.value,10);
+      if(isNaN(mins) || mins < 1) mins = 1;
+      if(mins > 180) mins = 180;
+      totalSeconds = mins * 60;
+      remainingSeconds = totalSeconds;
+    } else {
+      totalSeconds = getTargetSecondsToTime();
+      remainingSeconds = totalSeconds;
+      if(totalSeconds <= 0){
+        showToast('Вказаний час вже минув. Таймер не запущено.', 'error');
+        return;
+      }
+    }
+
+    if(!projectorWindow || projectorWindow.closed){
+      window.openProjectorWindow();
+    } else {
+      projectorWindow.focus();
+      startSyncInterval();
+    }
+
+    setStatus('counting', 'Відлік...');
+    startTick();
+  };
+
+  function startTick(){
+    clearInterval(timerInterval);
+    timerInterval = setInterval(function(){
+      if(remainingSeconds <= 0){
+        clearInterval(timerInterval);
+        timerInterval = null;
+        remainingSeconds = 0;
+        setStatus('done', 'Час вийшов!');
+        syncProjector();
+        return;
+      }
+      remainingSeconds--;
+      if(mode === 'toTime'){
+        var newTotal = getTargetSecondsToTime();
+        if(newTotal <= 0){
+          remainingSeconds = 0;
+          clearInterval(timerInterval);
+          timerInterval = null;
+          setStatus('done', 'Час вийшов!');
+          syncProjector();
+          return;
+        }
+        remainingSeconds = newTotal;
+      }
+      syncProjector();
+    }, 1000);
+  }
+
+  /* ===== PAUSE ===== */
+  window.togglePause = function(){
+    if(currentStatus !== 'counting' && currentStatus !== 'paused') return;
+    if(isPaused){
+      isPaused = false;
+      setStatus('counting', 'Відлік...');
+      startTick();
+    } else {
+      isPaused = true;
+      clearInterval(timerInterval);
+      timerInterval = null;
+      setStatus('paused', 'Пауза');
+    }
+  };
+
+  /* ===== RESET ===== */
+  window.resetTimer = function(){
+    clearInterval(timerInterval);
+    timerInterval = null;
+    isPaused = false;
+    remainingSeconds = 0;
+    totalSeconds = 0;
+    setStatus('reset', 'Скинуто');
+    stopSyncInterval();
+    if(projectorWindow && !projectorWindow.closed){
+      projectorWindow.close();
+    }
+    projectorWindow = null;
+    updateProjectorStatus(false);
+    if(projectorCheckInterval){
+      clearInterval(projectorCheckInterval);
+      projectorCheckInterval = null;
+    }
+  };
+
+  /* ===== TOAST ===== */
+  function showToast(msg, type){
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + (type || '');
+    toast.textContent = msg;
+    container.appendChild(toast);
+    requestAnimationFrame(function(){ toast.classList.add('show'); });
+    setTimeout(function(){
+      toast.classList.remove('show');
+      setTimeout(function(){ toast.remove(); }, 350);
+    }, 3000);
+  }
+
+  /* ===== INIT ===== */
+  remainingSeconds = parseInt(minutesInput.value,10) * 60;
+  syncProjector();
+
+})();
+</script>
+</body>
+</html>
