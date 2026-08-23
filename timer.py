@@ -273,21 +273,9 @@ class TimerApp:
              command=self._open_projector, height=36, radius=10,
              font=("Segoe UI", 10, "bold")).pack(fill="x", pady=(4, 6))
 
-        self._lbl(inner, "\u041f\u0440\u0435\u0441\u0435\u0442\u0438")
-        pf = tk.Frame(inner, bg=CARD)
-        pf.pack(fill="x", pady=(0, 4))
-        self.preset_var = tk.StringVar()
-        self.preset_menu = tk.OptionMenu(pf, self.preset_var, "")
-        self.preset_menu["menu"].delete(0, "end")
-        self.preset_menu.configure(bg=INP, fg=FG, font=("Segoe UI", 9), activebackground=BORDER,
-                                   activeforeground=FG, highlightthickness=0, relief="flat")
-        self.preset_menu["menu"].configure(bg=INP, fg=FG)
-        self.preset_menu.pack(side="left", fill="x", expand=True)
-        for t, c in [("\u0417\u0431\u0435\u0440.", self._save_preset_dlg),
-                     ("\u0417\u0430\u0432.", self._load_preset),
-                     ("\u0412\u0438\u0434.", self._delete_preset)]:
-            RBtn(pf, t, INP, FG, command=c, width=42, height=24, radius=7,
-                 font=("Segoe UI", 7, "bold")).pack(side="left", padx=1)
+        RBtn(inner, "\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0442\u0430\u0439\u043c\u0435\u0440\u0438", YLW, "#000",
+             command=self._open_saved, height=36, radius=10,
+             font=("Segoe UI", 10, "bold")).pack(fill="x", pady=(4, 6))
 
         sb = tk.Frame(root, bg="#0f1525", height=24)
         sb.pack(fill="x", side="bottom")
@@ -804,11 +792,108 @@ class TimerApp:
         t.geometry(f"+{x}+{y}")
         t.after(3000, t.destroy)
 
-    # ── Presets ──
+    # ── Saved Timers ──
+
+    def _open_saved(self):
+        d = tk.Toplevel(self.root)
+        d.title("\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0442\u0430\u0439\u043c\u0435\u0440\u0438")
+        d.configure(bg=BG)
+        d.attributes("-topmost", True)
+        d.geometry("320x400")
+        d.transient(self.root)
+        d.grab_set()
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                d.iconbitmap(icon_path)
+            except Exception:
+                pass
+
+        tk.Label(d, text="\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0442\u0430\u0439\u043c\u0435\u0440\u0438",
+                 font=("Segoe UI", 13, "bold"), fg=FG, bg=BG).pack(pady=(12, 8))
+
+        canvas = tk.Canvas(d, bg=BG, highlightthickness=0, bd=0)
+        sb = tk.Scrollbar(d, orient="vertical", command=canvas.yview)
+        list_frame = tk.Frame(canvas, bg=BG)
+        list_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas.create_window((0, 0), window=list_frame, anchor="nw")
+        canvas.configure(yscrollcommand=sb.set)
+        canvas.pack(side="left", fill="both", expand=True, padx=(12, 0))
+        sb.pack(side="right", fill="y", padx=(0, 12))
+
+        def _refresh():
+            for w in list_frame.winfo_children():
+                w.destroy()
+            self.presets = load_json(PRESETS_FILE, [])
+            if not self.presets:
+                tk.Label(list_frame, text="\u041d\u0435\u043c\u0430\u0454 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0438\u0445",
+                         font=("Segoe UI", 10), fg=DIM, bg=BG).pack(pady=20)
+                return
+            for p in self.presets:
+                row = tk.Frame(list_frame, bg=INP, cursor="hand2")
+                row.pack(fill="x", pady=2)
+                info = tk.Frame(row, bg=INP)
+                info.pack(side="left", fill="both", expand=True, padx=8, pady=6)
+                tk.Label(info, text=p["name"], font=("Segoe UI", 10, "bold"),
+                         fg=FG, bg=INP, anchor="w").pack(fill="x")
+                mins = p.get("minutes", "0")
+                secs = p.get("seconds", "0")
+                mode = p.get("mode", "")
+                detail = f"{mins}\u0445\u0432 {secs}\u0441\u00b7 {mode}"
+                tk.Label(info, text=detail, font=("Segoe UI", 8),
+                         fg=DIM, bg=INP, anchor="w").pack(fill="x")
+
+                def make_start(pr=p):
+                    def _start_it():
+                        self._apply_preset(pr)
+                        self._start()
+                        d.destroy()
+                    return _start_it
+
+                play = tk.Label(row, text="\u25b6", font=("Segoe UI", 14),
+                                fg=GRN, bg=INP, cursor="hand2", padx=8)
+                play.pack(side="right", padx=4)
+                play.bind("<Button-1>", lambda e, fn=make_start(): fn())
+
+                def make_delete(pr=p):
+                    def _del_it():
+                        self.presets = [x for x in self.presets if x["name"] != pr["name"]]
+                        save_json(PRESETS_FILE, self.presets)
+                        _refresh()
+                    return _del_it
+
+                del_lbl = tk.Label(row, text="\u2715", font=("Segoe UI", 11),
+                                   fg=RED, bg=INP, cursor="hand2", padx=6)
+                del_lbl.pack(side="right", padx=2)
+                del_lbl.bind("<Button-1>", lambda e, fn=make_delete(): fn())
+
+        def _add_new():
+            self._save_preset_dlg()
+            _refresh()
+
+        RBtn(d, "+ \u0414\u043e\u0434\u0430\u0442\u0438 \u0442\u0430\u0439\u043c\u0435\u0440", ACC, "#fff",
+             _add_new, height=34, radius=10, font=("Segoe UI", 10, "bold")).pack(fill="x", padx=12, pady=8)
+
+        _refresh()
+        d.bind("<Escape>", lambda _: d.destroy())
+
+    def _apply_preset(self, p):
+        self.min_var.set(p.get("minutes", "15"))
+        self.sec_var.set(p.get("seconds", "0"))
+        self.mode_var.set(p.get("mode", "\u0417\u043e\u0440\u043e\u0442\u043d\u0456\u0439 \u0432\u0456\u0434\u043b\u0456\u043a"))
+        self.time_var.set(p.get("time", "12:00"))
+        self.lbl_var.set(p.get("label", "\u0421\u0435\u043c\u0456\u043d\u0430\u0440 \u043f\u043e\u0447\u043d\u0435\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437:"))
+        self.color = p.get("color", ACC)
+        self.color_cv.configure(bg=self.color)
+        self._on_mode()
+        self.remaining = self._get_total()
+        self.total = self.remaining
+        self._update_display()
+        self._sync()
 
     def _save_preset_dlg(self):
         d = tk.Toplevel(self.root)
-        d.title("\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438 \u043f\u0440\u0435\u0441\u0435\u0442")
+        d.title("\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438 \u0442\u0430\u0439\u043c\u0435\u0440")
         d.configure(bg=BG)
         d.attributes("-topmost", True)
         d.geometry("300x110")
@@ -836,48 +921,7 @@ class TimerApp:
         self.presets = [p for p in self.presets if p["name"] != name]
         self.presets.append(preset)
         save_json(PRESETS_FILE, self.presets)
-        self._refresh_menu()
         self._toast(f"'{name}' \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e")
-
-    def _load_preset(self):
-        name = self.preset_var.get()
-        if not name:
-            return
-        p = next((x for x in self.presets if x["name"] == name), None)
-        if not p:
-            return
-        self.min_var.set(p.get("minutes", "15"))
-        self.sec_var.set(p.get("seconds", "0"))
-        self.mode_var.set(p.get("mode", "\u0417\u043e\u0440\u043e\u0442\u043d\u0456\u0439 \u0432\u0456\u0434\u043b\u0456\u043a"))
-        self.time_var.set(p.get("time", "12:00"))
-        self.lbl_var.set(p.get("label", "\u0421\u0435\u043c\u0456\u043d\u0430\u0440 \u043f\u043e\u0447\u043d\u0435\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437:"))
-        self.color = p.get("color", ACC)
-        self.color_cv.configure(bg=self.color)
-        self._on_mode()
-        self.remaining = self._get_total()
-        self.total = self.remaining
-        self._update_display()
-        self._sync()
-        self._toast(f"'{name}' \u0437\u0430\u0432\u0430\u043d\u0442\u0430\u0436\u0435\u043d\u043e")
-
-    def _delete_preset(self):
-        name = self.preset_var.get()
-        if not name:
-            return
-        self.presets = [p for p in self.presets if p["name"] != name]
-        save_json(PRESETS_FILE, self.presets)
-        self._refresh_menu()
-        self._toast(f"'{name}' \u0432\u0438\u0434\u0430\u043b\u0435\u043d\u043e")
-
-    def _refresh_menu(self):
-        menu = self.preset_menu["menu"]
-        menu.delete(0, "end")
-        for p in self.presets:
-            menu.add_command(label=p["name"], command=lambda n=p["name"]: self.preset_var.set(n))
-        if self.presets:
-            self.preset_var.set(self.presets[0]["name"])
-        else:
-            self.preset_var.set("")
 
     def _on_close(self):
         self._cancel()
