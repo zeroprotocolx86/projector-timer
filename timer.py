@@ -282,6 +282,16 @@ class TimerApp:
 
         self.time_frame.pack_forget()
 
+    def _sync_picker(self):
+        h = self.hour_var.get()
+        m = self.min_var_t.get()
+        self.hour_lb.selection_clear(0, "end")
+        self.hour_lb.selection_set(h)
+        self.hour_lb.see(h)
+        self.min_lb.selection_clear(0, "end")
+        self.min_lb.selection_set(m)
+        self.min_lb.see(m)
+
         self._lbl(inner, "\u0422\u0435\u043a\u0441\u0442")
         self.lbl_var = tk.StringVar(value="\u0421\u0435\u043c\u0456\u043d\u0430\u0440 \u043f\u043e\u0447\u043d\u0435\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437:")
         tk.Entry(inner, textvariable=self.lbl_var, font=("Segoe UI", 10), bg=INP, fg=FG,
@@ -714,18 +724,21 @@ class TimerApp:
 
         mon_w, mon_h = mon["w"], mon["h"]
 
-        self.p_label = tk.Label(self.proj, text="", font=("Segoe UI", 28),
+        self.pf = tk.Frame(self.proj, bg=self.prj_bg)
+        self.pf.place(relx=0.5, rely=0.45, anchor="center")
+
+        self.p_label = tk.Label(self.pf, text="", font=("Segoe UI", 28),
                                 fg=self.prj_label_color, bg=self.prj_bg)
-        self.p_label.place(relx=0.5, rely=0.35, anchor="center")
+        self.p_label.pack(pady=(0, 30))
 
         self.p_chars = []
-        self.p_single = tk.Label(self.proj, text="", font=("Consolas", self.prj_font_size, "bold"),
+        self.p_single = tk.Label(self.pf, text="", font=("Consolas", self.prj_font_size, "bold"),
                                  fg=self.prj_timer_color, bg=self.prj_bg)
-        self.p_single.place_forget()
+        self.p_single.pack_forget()
 
         bar_w = int(mon_w * 0.6)
         self.bar_frame = tk.Frame(self.proj, bg="#151c30", height=self.prj_bar_height, width=bar_w)
-        self.bar_frame.place(relx=0.5, rely=0.50, anchor="center")
+        self.bar_frame.place(relx=0.5, rely=0.85, anchor="center")
         self.bar_frame.pack_propagate(False)
         self.p_bar = tk.Canvas(self.bar_frame, bg=self.prj_bar_color, highlightthickness=0, bd=0,
                                height=self.prj_bar_height)
@@ -755,16 +768,17 @@ class TimerApp:
             st = "\u041e\u0447\u0456\u043a\u0443\u0432\u0430\u043d\u043d\u044f"
 
         self.proj.configure(bg=self.prj_bg)
+        self.pf.configure(bg=self.prj_bg)
         self.p_label.configure(text=self.lbl_var.get(), fg=self.prj_label_color, bg=self.prj_bg)
 
         if self.prj_show_bar:
-            self.bar_frame.place(relx=0.5, rely=0.55, anchor="center")
+            self.bar_frame.place(relx=0.5, rely=0.85, anchor="center")
             self.bar_frame.configure(bg="#151c30", height=self.prj_bar_height)
             self.p_bar.configure(bg=self.prj_bar_color, height=self.prj_bar_height)
             pct = max(0, min(1, sec / self.total)) if self.total > 0 else (1.0 if sec > 0 else 0)
             self.p_bar.place(relx=0, rely=0, relwidth=pct, relheight=1.0, anchor="nw")
         else:
-            self.bar_frame.pack_forget()
+            self.bar_frame.place_forget()
 
         self._render(txt)
 
@@ -772,20 +786,17 @@ class TimerApp:
         if len(txt) <= 1:
             self.p_single.configure(text=txt, fg=self.prj_timer_color, bg=self.prj_bg,
                                     font=("Consolas", self.prj_font_size, "bold"))
-            self.p_single.place(relx=0.5, rely=0.42, anchor="center")
+            self.p_single.pack()
             for c in self.p_chars:
-                c.place_forget()
+                c.pack_forget()
             return
-        self.p_single.place_forget()
+        self.p_single.pack_forget()
         while len(self.p_chars) < len(txt):
-            l = tk.Label(self.proj, text="", font=("Consolas", self.prj_font_size, "bold"), bg=self.prj_bg)
+            l = tk.Label(self.pf, text="", font=("Consolas", self.prj_font_size, "bold"), bg=self.prj_bg)
             self.p_chars.append(l)
         for c in self.p_chars:
-            c.place_forget()
+            c.pack_forget()
         rgb = self._hex2rgb(self.prj_timer_color)
-        cw = self.prj_font_size * 0.65
-        tw = cw * len(txt)
-        sx = self.proj.winfo_width() / 2 - tw / 2
         for i, ch in enumerate(txt):
             lbl = self.p_chars[i]
             t = i / max(1, len(txt) - 1)
@@ -794,7 +805,7 @@ class TimerApp:
             b = int(rgb[2] * (1 - t * 0.4))
             lbl.configure(text=ch, fg=f"#{r:02x}{g:02x}{b:02x}", bg=self.prj_bg,
                           font=("Consolas", self.prj_font_size, "bold"))
-            lbl.place(x=sx + cw * i, rely=0.42, anchor="w")
+            lbl.pack(side="left")
 
     def _flash(self):
         if not self.proj or not self.proj.winfo_exists():
@@ -892,7 +903,11 @@ class TimerApp:
                 mins = p.get("minutes", "0")
                 secs = p.get("seconds", "0")
                 mode = p.get("mode", "")
-                detail = f"{mins}\u0445\u0432 {secs}\u0441\u00b7 {mode}"
+                tm = p.get("time", "")
+                if "\u0414\u043e \u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u043e\u0433\u043e" in mode and tm:
+                    detail = f"{tm} \u00b7 {mode}"
+                else:
+                    detail = f"{mins}\u0445\u0432 {secs}\u0441\u00b7 {mode}"
                 tk.Label(info, text=detail, font=("Segoe UI", 8),
                          fg=DIM, bg=INP, anchor="w").pack(fill="x")
 
@@ -935,6 +950,15 @@ class TimerApp:
         self.sec_var.set(p.get("seconds", "0"))
         self.mode_var.set(p.get("mode", "\u0417\u043e\u0440\u043e\u0442\u043d\u0456\u0439 \u0432\u0456\u0434\u043b\u0456\u043a"))
         self.time_var.set(p.get("time", "12:00"))
+        h, m = 12, 0
+        try:
+            parts = self.time_var.get().split(":")
+            h, m = int(parts[0]), int(parts[1])
+        except (ValueError, IndexError):
+            pass
+        self.hour_var.set(h)
+        self.min_var_t.set(m)
+        self._sync_picker()
         self.lbl_var.set(p.get("label", "\u0421\u0435\u043c\u0456\u043d\u0430\u0440 \u043f\u043e\u0447\u043d\u0435\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437:"))
         self.color = p.get("color", ACC)
         self.color_cv.configure(bg=self.color)
@@ -970,6 +994,7 @@ class TimerApp:
             return
         preset = {"name": name, "minutes": self.min_var.get(), "seconds": self.sec_var.get(),
                   "mode": self.mode_var.get(), "time": self.time_var.get(),
+                  "hour": self.hour_var.get(), "minute": self.min_var_t.get(),
                   "label": self.lbl_var.get(), "color": self.color}
         self.presets = [p for p in self.presets if p["name"] != name]
         self.presets.append(preset)
