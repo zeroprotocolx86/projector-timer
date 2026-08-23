@@ -277,13 +277,17 @@ class TimerApp:
         bf2.pack(fill="x", pady=(4, 6))
         bf2.columnconfigure(0, weight=1)
         bf2.columnconfigure(1, weight=1)
+        bf2.columnconfigure(2, weight=1)
 
         RBtn(bf2, "\u041f\u0440\u043e\u0435\u043a\u0442\u043e\u0440", GRN, "#fff",
              command=self._open_projector, height=36, radius=10,
              font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky="ew", padx=(0, 2))
+        RBtn(bf2, "\u0417\u0431\u0435\u0440\u0435\u0433\u0442\u0438", ACC, "#fff",
+             command=self._save_preset_dlg, height=36, radius=10,
+             font=("Segoe UI", 10, "bold")).grid(row=0, column=1, sticky="ew", padx=2)
         RBtn(bf2, "\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456", YLW, "#fff",
              command=self._open_saved, height=36, radius=10,
-             font=("Segoe UI", 10, "bold")).grid(row=0, column=1, sticky="ew", padx=(2, 0))
+             font=("Segoe UI", 10, "bold")).grid(row=0, column=2, sticky="ew", padx=(2, 0))
 
         sb = tk.Frame(root, bg="#0f1525", height=24)
         sb.pack(fill="x", side="bottom")
@@ -679,15 +683,11 @@ class TimerApp:
 
         bar_w = int(mon_w * 0.6)
         self.bar_frame = tk.Frame(self.proj, bg="#151c30", height=self.prj_bar_height, width=bar_w)
-        self.bar_frame.place(relx=0.5, rely=0.55, anchor="center")
+        self.bar_frame.place(relx=0.5, rely=0.50, anchor="center")
         self.bar_frame.pack_propagate(False)
         self.p_bar = tk.Canvas(self.bar_frame, bg=self.prj_bar_color, highlightthickness=0, bd=0,
                                height=self.prj_bar_height)
         self.p_bar.place(relx=0, rely=0, relwidth=1.0, relheight=1.0, anchor="nw")
-
-        self.p_status = tk.Label(self.proj, text="\u041e\u0447\u0456\u043a\u0443\u0432\u0430\u043d\u043d\u044f",
-                                 font=("Segoe UI", 20), fg=self.prj_status_color, bg=self.prj_bg)
-        self.p_status.place(relx=0.5, rely=0.65, anchor="center")
 
         self._sync()
         self.proj_dot.configure(bg=GRN)
@@ -714,7 +714,6 @@ class TimerApp:
 
         self.proj.configure(bg=self.prj_bg)
         self.p_label.configure(text=self.lbl_var.get(), fg=self.prj_label_color, bg=self.prj_bg)
-        self.p_status.configure(text=st, fg=self.prj_status_color, bg=self.prj_bg)
 
         if self.prj_show_bar:
             self.bar_frame.place(relx=0.5, rely=0.55, anchor="center")
@@ -731,7 +730,7 @@ class TimerApp:
         if len(txt) <= 1:
             self.p_single.configure(text=txt, fg=self.prj_timer_color, bg=self.prj_bg,
                                     font=("Consolas", self.prj_font_size, "bold"))
-            self.p_single.place(relx=0.5, rely=0.45, anchor="center")
+            self.p_single.place(relx=0.5, rely=0.42, anchor="center")
             for c in self.p_chars:
                 c.place_forget()
             return
@@ -753,7 +752,7 @@ class TimerApp:
             b = int(rgb[2] * (1 - t * 0.4))
             lbl.configure(text=ch, fg=f"#{r:02x}{g:02x}{b:02x}", bg=self.prj_bg,
                           font=("Consolas", self.prj_font_size, "bold"))
-            lbl.place(x=sx + cw * i, rely=0.45, anchor="w")
+            lbl.place(x=sx + cw * i, rely=0.42, anchor="w")
 
     def _flash(self):
         if not self.proj or not self.proj.winfo_exists():
