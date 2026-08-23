@@ -282,16 +282,6 @@ class TimerApp:
 
         self.time_frame.pack_forget()
 
-    def _sync_picker(self):
-        h = self.hour_var.get()
-        m = self.min_var_t.get()
-        self.hour_lb.selection_clear(0, "end")
-        self.hour_lb.selection_set(h)
-        self.hour_lb.see(h)
-        self.min_lb.selection_clear(0, "end")
-        self.min_lb.selection_set(m)
-        self.min_lb.see(m)
-
         self._lbl(inner, "\u0422\u0435\u043a\u0441\u0442")
         self.lbl_var = tk.StringVar(value="\u0421\u0435\u043c\u0456\u043d\u0430\u0440 \u043f\u043e\u0447\u043d\u0435\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437:")
         tk.Entry(inner, textvariable=self.lbl_var, font=("Segoe UI", 10), bg=INP, fg=FG,
@@ -358,6 +348,16 @@ class TimerApp:
     def _lbl(self, parent, text):
         tk.Label(parent, text=text, font=("Segoe UI", 9, "bold"), fg=DIM, bg=CARD,
                  anchor="w").pack(fill="x", pady=(0, 1))
+
+    def _sync_picker(self):
+        h = self.hour_var.get()
+        m = self.min_var_t.get()
+        self.hour_lb.selection_clear(0, "end")
+        self.hour_lb.selection_set(h)
+        self.hour_lb.see(h)
+        self.min_lb.selection_clear(0, "end")
+        self.min_lb.selection_set(m)
+        self.min_lb.see(m)
 
     def _on_mode(self, *_):
         if self.mode_var.get() == "\u0414\u043e \u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u043e\u0433\u043e \u0447\u0430\u0441\u0443":
