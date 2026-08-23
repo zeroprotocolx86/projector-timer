@@ -164,7 +164,11 @@ class TimerApp:
         self._set_icon()
 
     def _set_icon(self):
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if getattr(sys, 'frozen', False):
+            base = sys._MEIPASS
+        else:
+            base = os.path.dirname(os.path.abspath(sys.argv[0]))
+        icon_path = os.path.join(base, "timer_icon.ico")
         if os.path.exists(icon_path):
             try:
                 self.root.iconbitmap(icon_path)
@@ -269,13 +273,17 @@ class TimerApp:
                             font=("Segoe UI", 11, "bold"))
         self.btn_rst.grid(row=0, column=2, sticky="ew", padx=(2, 0))
 
-        RBtn(inner, "\u041f\u0440\u043e\u0435\u043a\u0442\u043e\u0440", GRN, "#fff",
-             command=self._open_projector, height=36, radius=10,
-             font=("Segoe UI", 10, "bold")).pack(fill="x", pady=(4, 6))
+        bf2 = tk.Frame(inner, bg=CARD)
+        bf2.pack(fill="x", pady=(4, 6))
+        bf2.columnconfigure(0, weight=1)
+        bf2.columnconfigure(1, weight=1)
 
-        RBtn(inner, "\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0442\u0430\u0439\u043c\u0435\u0440\u0438", YLW, "#000",
+        RBtn(bf2, "\u041f\u0440\u043e\u0435\u043a\u0442\u043e\u0440", GRN, "#fff",
+             command=self._open_projector, height=36, radius=10,
+             font=("Segoe UI", 10, "bold")).grid(row=0, column=0, sticky="ew", padx=(0, 2))
+        RBtn(bf2, "\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456", YLW, "#fff",
              command=self._open_saved, height=36, radius=10,
-             font=("Segoe UI", 10, "bold")).pack(fill="x", pady=(4, 6))
+             font=("Segoe UI", 10, "bold")).grid(row=0, column=1, sticky="ew", padx=(2, 0))
 
         sb = tk.Frame(root, bg="#0f1525", height=24)
         sb.pack(fill="x", side="bottom")
@@ -642,7 +650,11 @@ class TimerApp:
         self.proj.geometry(f"{mon['w']}x{mon['h']}+{mon['x']}+{mon['y']}")
         self.proj.configure(cursor="none")
         self.proj.protocol("WM_DELETE_WINDOW", self._close_proj)
-        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if getattr(sys, 'frozen', False):
+            base = sys._MEIPASS
+        else:
+            base = os.path.dirname(os.path.abspath(sys.argv[0]))
+        icon_path = os.path.join(base, "timer_icon.ico")
         if os.path.exists(icon_path):
             try:
                 self.proj.iconbitmap(icon_path)
