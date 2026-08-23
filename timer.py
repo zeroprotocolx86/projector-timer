@@ -233,53 +233,11 @@ class TimerApp:
         self.mode_var.trace_add("write", lambda *_: self._on_mode())
 
         self.time_frame = tk.Frame(inner, bg=CARD)
-        self._lbl(self.time_frame, "\u0427\u0430\u0441")
+        self._lbl(self.time_frame, "\u0427\u0430\u0441 (14:30)")
         self.time_var = tk.StringVar(value="12:00")
-
-        picker = tk.Frame(self.time_frame, bg=CARD)
-        picker.pack(fill="x", pady=(0, 4))
-
-        self.hour_var = tk.IntVar(value=12)
-        self.min_var_t = tk.IntVar(value=0)
-
-        def _make_col(parent, var, values, width=3):
-            f = tk.Frame(parent, bg=INP, bd=0, highlightthickness=1, highlightbackground=BORDER)
-            f.pack(side="left", fill="both", expand=True, padx=2)
-            lb = tk.Listbox(f, font=("Consolas", 16, "bold"), bg=INP, fg=FG,
-                            selectbackground=ACC, selectforeground="#fff",
-                            highlightthickness=0, bd=0, width=width, height=3,
-                            activestyle="none", justify="center")
-            lb.pack(fill="both", expand=True)
-            for v in values:
-                lb.insert("end", v)
-            sel_idx = var.get() if var.get() < len(values) else 0
-            lb.selection_set(sel_idx)
-            lb.see(sel_idx)
-            def _on_select(e, v=var, l=lb):
-                sel = l.curselection()
-                if sel:
-                    v.set(int(l.get(sel[0])))
-                    _upd_time()
-            lb.bind("<<ListboxSelect>>", _on_select)
-            def _on_mousewheel(e, l=lb):
-                if e.delta > 0:
-                    l.yview_scroll(-1, "units")
-                else:
-                    l.yview_scroll(1, "units")
-                sel = l.curselection()
-                if sel:
-                    var.set(int(l.get(sel[0])))
-                    _upd_time()
-            lb.bind("<MouseWheel>", _on_mousewheel)
-            return lb
-
-        self.hour_lb = _make_col(picker, self.hour_var, [f"{i:02d}" for i in range(24)])
-        tk.Label(picker, text=":", font=("Consolas", 20, "bold"), fg=FG, bg=CARD).pack(side="left", padx=2)
-        self.min_lb = _make_col(picker, self.min_var_t, [f"{i:02d}" for i in range(60)])
-
-        def _upd_time():
-            self.time_var.set(f"{self.hour_var.get():02d}:{self.min_var_t.get():02d}")
-
+        tk.Entry(self.time_frame, textvariable=self.time_var, font=("Consolas", 14, "bold"), bg=INP, fg=FG,
+                 insertbackground=FG, relief="flat", highlightthickness=1,
+                 highlightbackground=BORDER, highlightcolor=ACC, justify="center").pack(fill="x", ipady=4, pady=(0, 4))
         self.time_frame.pack_forget()
 
         self._lbl(inner, "\u0422\u0435\u043a\u0441\u0442")
@@ -348,16 +306,6 @@ class TimerApp:
     def _lbl(self, parent, text):
         tk.Label(parent, text=text, font=("Segoe UI", 9, "bold"), fg=DIM, bg=CARD,
                  anchor="w").pack(fill="x", pady=(0, 1))
-
-    def _sync_picker(self):
-        h = self.hour_var.get()
-        m = self.min_var_t.get()
-        self.hour_lb.selection_clear(0, "end")
-        self.hour_lb.selection_set(h)
-        self.hour_lb.see(h)
-        self.min_lb.selection_clear(0, "end")
-        self.min_lb.selection_set(m)
-        self.min_lb.see(m)
 
     def _on_mode(self, *_):
         if self.mode_var.get() == "\u0414\u043e \u043a\u043e\u043d\u043a\u0440\u0435\u0442\u043d\u043e\u0433\u043e \u0447\u0430\u0441\u0443":
@@ -950,15 +898,6 @@ class TimerApp:
         self.sec_var.set(p.get("seconds", "0"))
         self.mode_var.set(p.get("mode", "\u0417\u043e\u0440\u043e\u0442\u043d\u0456\u0439 \u0432\u0456\u0434\u043b\u0456\u043a"))
         self.time_var.set(p.get("time", "12:00"))
-        h, m = 12, 0
-        try:
-            parts = self.time_var.get().split(":")
-            h, m = int(parts[0]), int(parts[1])
-        except (ValueError, IndexError):
-            pass
-        self.hour_var.set(h)
-        self.min_var_t.set(m)
-        self._sync_picker()
         self.lbl_var.set(p.get("label", "\u0421\u0435\u043c\u0456\u043d\u0430\u0440 \u043f\u043e\u0447\u043d\u0435\u0442\u044c\u0441\u044f \u0447\u0435\u0440\u0435\u0437:"))
         self.color = p.get("color", ACC)
         self.color_cv.configure(bg=self.color)
@@ -994,7 +933,6 @@ class TimerApp:
             return
         preset = {"name": name, "minutes": self.min_var.get(), "seconds": self.sec_var.get(),
                   "mode": self.mode_var.get(), "time": self.time_var.get(),
-                  "hour": self.hour_var.get(), "minute": self.min_var_t.get(),
                   "label": self.lbl_var.get(), "color": self.color}
         self.presets = [p for p in self.presets if p["name"] != name]
         self.presets.append(preset)
