@@ -7,6 +7,7 @@ import time
 import datetime
 import json
 import os
+import sys
 import winsound
 import threading
 
@@ -130,7 +131,7 @@ class TimerApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.withdraw()
-        self.root.title("Timer")
+        self.root.title("Timer | DAps")
         self.root.configure(bg=BG)
         self.root.resizable(False, False)
         self.root.attributes("-topmost", True)
@@ -160,17 +161,15 @@ class TimerApp:
         self._build()
         self._center()
         self._update_display()
-        self._remove_icon()
+        self._set_icon()
 
-    def _remove_icon(self):
-        try:
-            self.root.iconbitmap(default="")
-        except Exception:
-            pass
-        try:
-            self.root.tk.call("wm", "iconbitmap", self.root._w, "-default", "")
-        except Exception:
-            pass
+    def _set_icon(self):
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.root.iconbitmap(icon_path)
+            except Exception:
+                pass
 
     def _center(self):
         self.root.update_idletasks()
@@ -181,18 +180,6 @@ class TimerApp:
 
     def _build(self):
         root = self.root
-
-        bar = tk.Frame(root, bg=CARD, height=32)
-        bar.pack(fill="x")
-        bar.pack_propagate(False)
-        tk.Label(bar, text="  \u0422\u0410\u0419\u041c\u0415\u0420", font=("Segoe UI", 9, "bold"),
-                 fg=ACC, bg=CARD).pack(side="left")
-        tk.Button(bar, text=" \u2014 ", font=("Segoe UI", 10, "bold"), bg=CARD, fg=DIM,
-                  activebackground=BORDER, activeforeground=FG, relief="flat", bd=0,
-                  command=root.iconify).pack(side="right")
-        tk.Button(bar, text=" \u2715 ", font=("Segoe UI", 10, "bold"), bg=CARD, fg=RED,
-                  activebackground="#7f1d1d", activeforeground="#fff", relief="flat", bd=0,
-                  command=self._on_close).pack(side="right")
 
         card = tk.Frame(root, bg=CARD)
         card.pack(fill="both", expand=True, padx=10, pady=(0, 10))
@@ -283,12 +270,8 @@ class TimerApp:
         self.btn_rst.grid(row=0, column=2, sticky="ew", padx=(2, 0))
 
         RBtn(inner, "\u041f\u0440\u043e\u0435\u043a\u0442\u043e\u0440", GRN, "#fff",
-             command=self._open_projector, height=34, radius=10,
+             command=self._open_projector, height=36, radius=10,
              font=("Segoe UI", 10, "bold")).pack(fill="x", pady=(4, 6))
-
-        RBtn(inner, "\u0420\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u043f\u0440\u043e\u0435\u043a\u0442\u043e\u0440\u0430", "#7c3aed", "#fff",
-             command=self._open_editor, height=30, radius=10,
-             font=("Segoe UI", 9, "bold")).pack(fill="x", pady=(0, 6))
 
         self._lbl(inner, "\u041f\u0440\u0435\u0441\u0435\u0442\u0438")
         pf = tk.Frame(inner, bg=CARD)
@@ -314,6 +297,8 @@ class TimerApp:
         self.proj_lbl = tk.Label(sb, text="\u041f\u0440\u043e\u0435\u043a\u0442\u043e\u0440: \u0437\u0430\u043a\u0440\u0438\u0442\u043e",
                                  font=("Segoe UI", 8), fg=DIM, bg="#0f1525")
         self.proj_lbl.place(x=20, rely=0.5, anchor="w")
+        tk.Label(sb, text="DAps | Diachyk Andrii Private Solutions",
+                 font=("Segoe UI", 7), fg="#444", bg="#0f1525").pack(side="right", padx=8)
 
         self.root.bind("<Double-Button-1>", lambda _: self._toggle_pause())
         self.root.bind("<Escape>", lambda _: self._toggle_pause())
@@ -669,6 +654,12 @@ class TimerApp:
         self.proj.geometry(f"{mon['w']}x{mon['h']}+{mon['x']}+{mon['y']}")
         self.proj.configure(cursor="none")
         self.proj.protocol("WM_DELETE_WINDOW", self._close_proj)
+        icon_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "timer_icon.ico")
+        if os.path.exists(icon_path):
+            try:
+                self.proj.iconbitmap(icon_path)
+            except Exception:
+                pass
         self.proj.update_idletasks()
         self.proj.lift()
         self.proj.focus_force()
