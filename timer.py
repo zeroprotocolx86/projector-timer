@@ -233,11 +233,53 @@ class TimerApp:
         self.mode_var.trace_add("write", lambda *_: self._on_mode())
 
         self.time_frame = tk.Frame(inner, bg=CARD)
-        self._lbl(self.time_frame, "\u0427\u0430\u0441 (\u0413\u0413:\u0425\u0425)")
+        self._lbl(self.time_frame, "\u0427\u0430\u0441")
         self.time_var = tk.StringVar(value="12:00")
-        tk.Entry(self.time_frame, textvariable=self.time_var, font=("Segoe UI", 12), bg=INP, fg=FG,
-                 insertbackground=FG, relief="flat", highlightthickness=1,
-                 highlightbackground=BORDER, highlightcolor=ACC).pack(fill="x", ipady=4, pady=(0, 4))
+
+        picker = tk.Frame(self.time_frame, bg=CARD)
+        picker.pack(fill="x", pady=(0, 4))
+
+        self.hour_var = tk.IntVar(value=12)
+        self.min_var_t = tk.IntVar(value=0)
+
+        def _make_col(parent, var, values, width=3):
+            f = tk.Frame(parent, bg=INP, bd=0, highlightthickness=1, highlightbackground=BORDER)
+            f.pack(side="left", fill="both", expand=True, padx=2)
+            lb = tk.Listbox(f, font=("Consolas", 16, "bold"), bg=INP, fg=FG,
+                            selectbackground=ACC, selectforeground="#fff",
+                            highlightthickness=0, bd=0, width=width, height=3,
+                            activestyle="none", justify="center")
+            lb.pack(fill="both", expand=True)
+            for v in values:
+                lb.insert("end", v)
+            sel_idx = var.get() if var.get() < len(values) else 0
+            lb.selection_set(sel_idx)
+            lb.see(sel_idx)
+            def _on_select(e, v=var, l=lb):
+                sel = l.curselection()
+                if sel:
+                    v.set(int(l.get(sel[0])))
+                    _upd_time()
+            lb.bind("<<ListboxSelect>>", _on_select)
+            def _on_mousewheel(e, l=lb):
+                if e.delta > 0:
+                    l.yview_scroll(-1, "units")
+                else:
+                    l.yview_scroll(1, "units")
+                sel = l.curselection()
+                if sel:
+                    var.set(int(l.get(sel[0])))
+                    _upd_time()
+            lb.bind("<MouseWheel>", _on_mousewheel)
+            return lb
+
+        self.hour_lb = _make_col(picker, self.hour_var, [f"{i:02d}" for i in range(24)])
+        tk.Label(picker, text=":", font=("Consolas", 20, "bold"), fg=FG, bg=CARD).pack(side="left", padx=2)
+        self.min_lb = _make_col(picker, self.min_var_t, [f"{i:02d}" for i in range(60)])
+
+        def _upd_time():
+            self.time_var.set(f"{self.hour_var.get():02d}:{self.min_var_t.get():02d}")
+
         self.time_frame.pack_forget()
 
         self._lbl(inner, "\u0422\u0435\u043a\u0441\u0442")
