@@ -578,7 +578,7 @@ class TimerApp:
             self.total = max(self.total, self.remaining)
             if self.remaining <= 0:
                 self.running = False
-                self._set_st("\u0427\u0430\u0441 \u0432\u0439\u0448\u043e\u0432!", RED)
+                self._set_st("\u0427\u0430\u0441 \u0432\u0439\u0439\u0448\u043e\u0432!", RED)
                 self._alarm()
         else:
             try:
@@ -602,7 +602,7 @@ class TimerApp:
             return
         if self.remaining <= 0:
             self.running = False
-            self._set_st("\u0427\u0430\u0441 \u0432\u0439\u0448\u043e\u0432!", RED)
+            self._set_st("\u0427\u0430\u0441 \u0432\u0439\u0439\u0448\u043e\u0432!", RED)
             self._alarm()
             self._sync()
             return
@@ -612,7 +612,7 @@ class TimerApp:
             if c <= 0:
                 self.running = False
                 self.remaining = 0
-                self._set_st("\u0427\u0430\u0441 \u0432\u0439\u0448\u043e\u0432!", RED)
+                self._set_st("\u0427\u0430\u0441 \u0432\u0439\u0439\u0448\u043e\u0432!", RED)
                 self._alarm()
                 self._sync()
                 return
@@ -706,7 +706,7 @@ class TimerApp:
         txt = self._fmt(sec)
 
         if sec <= 0 and not self.running:
-            st = "\u0427\u0430\u0441 \u0432\u0439\u0448\u043e\u0432!"
+            st = "\u0427\u0430\u0441 \u0432\u0439\u0439\u0448\u043e\u0432!"
             self._flash()
         elif self.paused:
             st = "\u041f\u0430\u0443\u0437\u0430"
